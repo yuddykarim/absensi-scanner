@@ -6,74 +6,38 @@
     <title>E-Presensi Scanner</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
-    body {
-        font-family: 'Arial', sans-serif;
-        background-color: #f1f3f8;
-        margin: 0; display: flex; flex-direction: column; align-items: center; padding-top: 20px;
-    }
-
-    /* Jam Digital */
-    #digital-clock {
-        font-size: 48px; font-weight: bold; color: #1a1c42; margin-bottom: 20px;
-    }
-
-    .card {
-        width: 340px; background: white; border-radius: 20px;
-        overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
-    }
-
-    .header {
-        background-color: #1a1c42; color: white; padding: 15px; font-weight: bold; font-size: 18px;
-    }
-
-    /* AREA KAMERA */
-    .camera-container { 
-        padding: 15px;
-        margin: 15px;
-        border: 4px solid #ddd;
-        border-radius: 15px;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        background: #f8f9fa;
-        position: relative;
-    }
-
-    .camera-container.scan-success {
-        border-color: #2ecc71 !important;
-        transform: scale(1.05);
-        box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
-    }
-
-    .camera-container.scan-pulang {
-        border-color: #3498db !important;
-        transform: scale(1.05);
-        box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);
-    }
-
-    #reader {
-        width: 100%; 
-        border: none !important;
-        border-radius: 10px;
-        overflow: hidden;
-    }
-
-    /* Status Box */
-    #status-container {
-        margin: 5px 20px 20px 20px; padding: 15px; 
-        background-color: #fff0f0;
-        border-radius: 12px; color: #d63031; font-size: 14px;
-        font-weight: bold; min-height: 80px; 
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        transition: all 0.3s;
-    }
-
-    .button-group {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 15px 20px;
-    }
-    .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    .btn:active { transform: scale(0.95); }
-    .btn-blue { background-color: #e8f0fe; color: #1a73e8; }
-    .btn-purple { background-color: #f3e5f5; color: #9c27b0; }
-    .btn-full { grid-column: span 2; background-color: #f8f9fa; color: #5f6368; border: 1px solid #ddd; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f1f3f8;
+            margin: 0; display: flex; flex-direction: column; align-items: center; padding-top: 20px;
+        }
+        #digital-clock {
+            font-size: 48px; font-weight: bold; color: #1a1c42; margin-bottom: 20px;
+        }
+        .card {
+            width: 340px; background: white; border-radius: 20px;
+            overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
+        }
+        .header {
+            background-color: #1a1c42; color: white; padding: 15px; font-weight: bold; font-size: 18px;
+        }
+        .camera-container { 
+            padding: 15px; margin: 15px; border: 4px solid #ddd; border-radius: 15px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: #f8f9fa;
+        }
+        .camera-container.scan-success { border-color: #2ecc71 !important; transform: scale(1.05); }
+        .camera-container.scan-pulang { border-color: #3498db !important; transform: scale(1.05); }
+        #reader { width: 100%; border: none !important; border-radius: 10px; overflow: hidden; }
+        #status-container {
+            margin: 5px 20px 20px 20px; padding: 15px; background-color: #fff0f0;
+            border-radius: 12px; color: #d63031; font-size: 14px; font-weight: bold;
+            min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 15px 20px; }
+        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-blue { background-color: #e8f0fe; color: #1a73e8; }
+        .btn-purple { background-color: #f3e5f5; color: #9c27b0; }
+        .btn-full { grid-column: span 2; background-color: #f8f9fa; color: #5f6368; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
@@ -82,7 +46,7 @@
 
     <div class="card">
         <div class="header">E-Presensi Guru</div>
-        <div class="camera-container">
+        <div class="camera-container" id="cam-border">
             <div id="reader"></div>
         </div>
         <div id="status-container">
@@ -101,35 +65,35 @@
 
 <script>
     const scriptURL = "https://script.google.com/macros/s/AKfycbzhETx9DIZp6WakTELbOoV4TXQreQ2Kh_WSap1U0vWEVqKDcFhH3tFYNSXoQXqDucY9/exec";
-    const statusText = document.getElementById("status-text");
-    const statusContainer = document.getElementById("status-container");
-    const beep = document.getElementById("beepAudio");
     let html5QrCode;
     let isProcessing = false;
 
+    // Fungsi Jam Digital
     function updateClock() {
         const now = new Date();
-        const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+        const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Makassar' };
         document.getElementById('digital-clock').innerText = now.toLocaleTimeString('id-ID', options);
     }
     setInterval(updateClock, 1000);
+    updateClock();
 
     function onScanSuccess(decodedText) {
         if (isProcessing) return;
         isProcessing = true;
 
-        const container = document.querySelector(".camera-container");
-        
-        // Bunyi & Animasi Awal
+        const container = document.getElementById("cam-border");
+        const statusText = document.getElementById("status-text");
+        const statusContainer = document.getElementById("status-container");
+        const beep = document.getElementById("beepAudio");
+
         if(beep) beep.play().catch(() => {});
         container.classList.add("scan-success");
-        statusText.innerHTML = "Memproses Data...";
+        statusText.innerHTML = "Memproses...";
 
         fetch(scriptURL, { method: "POST", body: JSON.stringify({ qr: decodedText }) })
         .then(res => res.json())
         .then(result => {
             if (result.success) {
-                // Ganti warna ke Biru jika Pulang
                 if (result.type === 'pulang') {
                     container.classList.remove("scan-success");
                     container.classList.add("scan-pulang");
@@ -138,22 +102,52 @@
                     statusContainer.style.backgroundColor = "#eafff0";
                 }
 
-                // Logika Label Keterangan (Terlambat/Pulang Cepat)
-                let labelStyle = "font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 5px; margin: 5px 0;";
-                let ket = result.status || "-";
+                let ket = result.status || "Hadir";
+                let labelStyle = "font-size: 11px; padding: 2px 8px; border-radius: 5px; margin: 5px 0; border: 1px solid ";
                 
-                if (ket.includes("Terlambat")) {
-                    labelStyle += "color: #e11d48; background: #fff1f2; border: 1px solid #ffe4e6;";
-                } else if (ket.includes("Pulang Cepat")) {
-                    labelStyle += "color: #ea580c; background: #fff7ed; border: 1px solid #ffedd5;";
-                } else {
-                    labelStyle += "color: #059669; background: #f0fdf4;";
-                }
+                if (ket.includes("Terlambat")) labelStyle += "#ffe4e6; color: #e11d48; background: #fff1f2;";
+                else if (ket.includes("Pulang Cepat")) labelStyle += "#ffedd5; color: #ea580c; background: #fff7ed;";
+                else labelStyle += "#dcfce7; color: #059669; background: #f0fdf4;";
 
                 statusText.innerHTML = `
-                    <div style="font-weight:bold; font-size:16px; color:#1a1c42;">${result.nama}</div>
+                    <div style="font-size:16px; color:#1a1c42;">${result.nama}</div>
                     <div style="${labelStyle}">${ket}</div>
-                    <div style="font-size:22px; font-weight:bold; color:#1a1c42;">${result.type === 'datang' ? result.jamDatang : result.jamPulang}</div>
+                    <div style="font-size:22px; color:#1a1c42;">${result.type === 'datang' ? result.jamDatang : result.jamPulang}</div>
                 `;
             } else {
-                statusContainer.style.backgroundColor = "#
+                statusContainer.style.backgroundColor = "#fff0f0";
+                statusText.innerHTML = `<div style="color:#d63031;">${result.message}</div>`;
+            }
+        })
+        .catch(() => { statusText.innerHTML = "Gagal terhubung ke Server."; })
+        .finally(() => {
+            setTimeout(() => {
+                isProcessing = false;
+                container.classList.remove("scan-success", "scan-pulang");
+                statusContainer.style.backgroundColor = "#fff0f0";
+                statusText.innerHTML = "Siap scan berikutnya...";
+            }, 5000); 
+        });
+    }
+
+    function startScanner(side) {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => mountScanner(side)).catch(() => mountScanner(side));
+        } else {
+            mountScanner(side);
+        }
+    }
+
+    function mountScanner(side) {
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start({ facingMode: side }, { fps: 10, qrbox: 250 }, onScanSuccess)
+        .then(() => { document.getElementById("status-text").innerText = "Kamera Aktif. Silakan Scan."; })
+        .catch(err => { document.getElementById("status-text").innerText = "Kamera Error: " + err; });
+    }
+
+    function switchCamera(side) { startScanner(side); }
+
+    window.onload = () => { setTimeout(() => startScanner("environment"), 1000); };
+</script>
+</body>
+</html>
