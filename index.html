@@ -26,83 +26,51 @@ button { padding:10px 20px; margin-top:20px; }
 <div id="reader"></div>
 
 <script>
-let html5QrCode;
-let isScanning = false;
+const scriptURL = "https://script.google.com/macros/s/AKfycbwelKIpYAGqzkjIZndZqWWOXcaYDojnR8pPqa3965ugzcyTE0gHnFKvI2PzQlMnWb2b/exec";
 
-function startCamera(facingMode) {
+window.onload = function() {
 
-    if (isScanning) return;
+  console.log("Halaman loaded");
 
-    document.getElementById("camLoading").classList.remove("hidden");
+  if (!navigator.mediaDevices) {
+    alert("Browser tidak mendukung kamera");
+    return;
+  }
 
-    html5QrCode = new Html5Qrcode("reader");
+  Html5Qrcode.getCameras()
+    .then(devices => {
+      console.log("Cameras found:", devices);
 
-    html5QrCode.start(
-        { facingMode: facingMode },
-        {
-            fps: 10,
-            qrbox: { width: 250, height: 250 }
-        },
+      if (devices.length === 0) {
+        alert("Tidak ada kamera ditemukan");
+        return;
+      }
+
+      const html5QrCode = new Html5Qrcode("reader");
+
+      html5QrCode.start(
+        devices[0].id,
+        { fps: 10, qrbox: 250 },
         qrCodeMessage => {
 
-            if (!isScanning) {
-                isScanning = true;
+          fetch(scriptURL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({ qr: qrCodeMessage }),
+            headers: { "Content-Type": "text/plain" }
+          });
 
-                showResult("success", "QR Terdeteksi ✔");
+          alert("QR terkirim");
+        }
+      );
 
-                fetch("URL_WEBAPP_ANDA", {
-                    method: "POST",
-                    mode: "no-cors",
-                    body: JSON.stringify({ qr: qrCodeMessage }),
-                    headers: { "Content-Type": "text/plain" }
-                });
-
-                setTimeout(() => {
-                    isScanning = false;
-                }, 3000);
-            }
-
-        },
-        errorMessage => {}
-    ).then(() => {
-
-        document.getElementById("camLoading").classList.add("hidden");
-
-    }).catch(err => {
-
-        showResult("error", "Gagal Mengakses Kamera");
-        console.error(err);
-
+    })
+    .catch(err => {
+      console.error("Error getCameras:", err);
+      alert("Izin kamera ditolak atau error: " + err);
     });
-}
-
-function stopAndBack() {
-    if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-            html5QrCode.clear();
-        });
-    }
-}
-
-function showResult(type, message) {
-
-    const el = document.getElementById("scanResult");
-    el.classList.remove("hidden");
-
-    if (type === "success") {
-        el.className = "mb-4 text-center text-xs font-bold text-green-600 animate-fade-in";
-    } else {
-        el.className = "mb-4 text-center text-xs font-bold text-red-600 animate-fade-in";
-    }
-
-    el.innerText = message;
-
-    setTimeout(() => {
-        el.classList.add("hidden");
-    }, 2500);
-}
-
-<script>
+};
+</script>
 function updateClock() {
     const now = new Date();
     const time = now.toLocaleTimeString('id-ID', { hour12: false });
