@@ -12,76 +12,46 @@
             margin: 0; display: flex; flex-direction: column; align-items: center; padding-top: 20px;
         }
 
-        /* Jam Digital di Atas */
+        /* Jam Digital */
         #digital-clock {
-            font-size: 48px;
-            font-weight: bold;
-            color: #1a1c42;
-            margin-bottom: 20px;
+            font-size: 48px; font-weight: bold; color: #1a1c42; margin-bottom: 20px;
         }
 
         .card {
-            width: 320px;
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            text-align: center;
+            width: 320px; background: white; border-radius: 15px;
+            overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center;
         }
 
-        /* Header Scanner */
         .header {
-            background-color: #1a1c42;
-            color: white;
-            padding: 12px;
-            font-weight: bold;
-            font-size: 18px;
+            background-color: #1a1c42; color: white; padding: 12px; font-weight: bold; font-size: 18px;
         }
 
-        /* Area Kamera */
-        .camera-container {
-            padding: 20px;
-        }
+        .camera-container { padding: 20px; }
+
+        /* Bingkai Kamera - Awalnya Abu-abu tipis */
         #reader {
-            width: 100%;
-            border: 4px solid #2ecc71; /* Bingkai Hijau sesuai gambar */
-            border-radius: 10px;
-            overflow: hidden;
-            transition: border-color 0.3s;
+            width: 100%; border: 4px solid #ddd; border-radius: 10px;
+            overflow: hidden; transition: all 0.3s;
         }
 
-        /* Status & Notifikasi */
+        /* Kelas untuk Bingkai Hijau saat Berhasil */
+        #reader.scan-success {
+            border: 6px solid #2ecc71 !important; transform: scale(1.02);
+        }
+
         #status-container {
-            margin: 10px 20px;
-            padding: 15px;
-            background-color: #fff0f0; /* Pink muda untuk standby/error */
-            border-radius: 8px;
-            color: #d63031;
-            font-size: 14px;
-            font-weight: bold;
-            min-height: 40px;
-            display: flex; align-items: center; justify-content: center;
+            margin: 10px 20px; padding: 15px; background-color: #fff0f0;
+            border-radius: 8px; color: #d63031; font-size: 14px;
+            font-weight: bold; min-height: 40px; display: flex; align-items: center; justify-content: center;
         }
 
-        /* Tombol-tombol */
         .button-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            padding: 0 20px 10px 20px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 10px 20px;
         }
-        .btn {
-            border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer;
-        }
+        .btn { border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; }
         .btn-blue { background-color: #e8f0fe; color: #1a73e8; }
         .btn-purple { background-color: #f3e5f5; color: #9c27b0; }
-        .btn-full {
-            grid-column: span 2;
-            background-color: #f8f9fa;
-            color: #5f6368;
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-        }
+        .btn-full { grid-column: span 2; background-color: #f8f9fa; color: #5f6368; margin-bottom: 15px; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
@@ -90,15 +60,12 @@
 
     <div class="card">
         <div class="header">Scanner</div>
-        
         <div class="camera-container">
             <div id="reader"></div>
         </div>
-
         <div id="status-container">
             <span id="status-text">Menunggu Kamera...</span>
         </div>
-
         <div class="button-group">
             <button class="btn btn-blue" onclick="switchCamera('environment')">Belakang</button>
             <button class="btn btn-purple" onclick="switchCamera('user')">Depan</button>
@@ -106,7 +73,8 @@
         </div>
     </div>
 
-    <audio id="beep">
+    <audio id="beepAudio" preload="auto">
+        <source src="https://raw.githubusercontent.com/yuddykarim/absensi-scanner/main/beep.mp3" type="audio/mpeg">
         <source src="data:audio/wav;base64,UklGRl9vT19XQVZFRm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YT1vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19v" type="audio/wav">
     </audio>
 
@@ -114,23 +82,29 @@
     const scriptURL = "https://script.google.com/macros/s/AKfycbwelKIpYAGqzkjIZndZqWWOXcaYDojnR8pPqa3965ugzcyTE0gHnFKvI2PzQlMnWb2b/exec";
     const statusText = document.getElementById("status-text");
     const statusContainer = document.getElementById("status-container");
-    const beep = document.getElementById("beep");
+    const readerElem = document.getElementById("reader");
+    const beep = document.getElementById("beepAudio");
     let html5QrCode;
+    let isProcessing = false;
 
-    // Fungsi Jam Realtime
     function updateClock() {
         const now = new Date();
-        const h = String(now.getHours()).padStart(2, '0');
-        const m = String(now.getMinutes()).padStart(2, '0');
-        const s = String(now.getSeconds()).padStart(2, '0');
-        document.getElementById('digital-clock').innerText = `${h}:${m}:${s}`;
+        document.getElementById('digital-clock').innerText = now.toLocaleTimeString('id-ID');
     }
     setInterval(updateClock, 1000);
     updateClock();
 
     function onScanSuccess(decodedText) {
-        beep.play();
-        statusContainer.style.backgroundColor = "#eafff0"; // Hijau muda sukses
+        if (isProcessing) return;
+        isProcessing = true;
+
+        // Jalankan Suara
+        beep.currentTime = 0;
+        beep.play().catch(e => console.log("Audio play diblokir browser, perlu interaksi pertama"));
+
+        // Efek Bingkai Hijau
+        readerElem.classList.add("scan-success");
+        statusContainer.style.backgroundColor = "#eafff0";
         statusContainer.style.color = "#27ae60";
         statusText.innerText = "BERHASIL: " + decodedText;
 
@@ -141,22 +115,34 @@
             headers: { "Content-Type": "text/plain" }
         });
 
-        // Auto Resume
         setTimeout(() => {
+            isProcessing = false;
+            readerElem.classList.remove("scan-success");
             statusContainer.style.backgroundColor = "#fff0f0";
             statusContainer.style.color = "#d63031";
             statusText.innerText = "Siap scan berikutnya...";
-        }, 2000);
+        }, 2500);
     }
 
     function startScanner(side) {
-        if(html5QrCode) html5QrCode.stop();
+        if(html5QrCode) {
+            html5QrCode.stop().then(() => {
+                mountScanner(side);
+            });
+        } else {
+            mountScanner(side);
+        }
+    }
+
+    function mountScanner(side) {
         html5QrCode = new Html5Qrcode("reader");
         html5QrCode.start(
             { facingMode: side }, 
             { fps: 10, qrbox: 200 },
             onScanSuccess
-        ).catch(err => {
+        ).then(() => {
+            statusText.innerText = "Kamera Aktif. Silakan Scan.";
+        }).catch(err => {
             statusText.innerText = "Gagal Kamera: " + err;
         });
     }
@@ -165,6 +151,8 @@
         startScanner(side);
     }
 
+    // Browser sering memblokir audio otomatis, jadi kita butuh satu klik user di awal
+    window.onclick = () => { beep.load(); };
     window.onload = () => startScanner("environment");
 </script>
 </body>
