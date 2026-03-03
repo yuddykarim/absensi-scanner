@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Scanner Absensi</title>
-<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 body { font-family: Arial; text-align:center; padding:20px; }
 #reader { width:300px; margin:auto; }
@@ -18,23 +18,48 @@ button { padding:10px 20px; margin-top:20px; }
 <script>
 const scriptURL = "https://script.google.com/macros/s/AKfycbw_Hiw-azPT3iVkGRNcGJJ7AVECkrpd6MHSZnRTd7bMhNfbDb6j9aCrcR3yVJjAwxSw/exec";
 
-function onScanSuccess(decodedText) {
+window.onload = function() {
 
-  fetch(scriptURL, {
-    method: "POST",
-    mode: "no-cors",   // ← TAMBAHKAN INI
-    body: JSON.stringify({ qr: decodedText }),
-    headers: {
-      "Content-Type": "text/plain"
-    }
-  })
-  .then(() => {
-    alert("Data terkirim");
-  })
-  .catch(() => {
-    alert("Gagal kirim data");
-  });
-}
+  console.log("Halaman loaded");
+
+  if (!navigator.mediaDevices) {
+    alert("Browser tidak mendukung kamera");
+    return;
+  }
+
+  Html5Qrcode.getCameras()
+    .then(devices => {
+      console.log("Cameras found:", devices);
+
+      if (devices.length === 0) {
+        alert("Tidak ada kamera ditemukan");
+        return;
+      }
+
+      const html5QrCode = new Html5Qrcode("reader");
+
+      html5QrCode.start(
+        devices[0].id,
+        { fps: 10, qrbox: 250 },
+        qrCodeMessage => {
+
+          fetch(scriptURL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({ qr: qrCodeMessage }),
+            headers: { "Content-Type": "text/plain" }
+          });
+
+          alert("QR terkirim");
+        }
+      );
+
+    })
+    .catch(err => {
+      console.error("Error getCameras:", err);
+      alert("Izin kamera ditolak atau error: " + err);
+    });
+};
 </script>
 
 </body>
