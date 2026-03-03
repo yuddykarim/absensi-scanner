@@ -123,65 +123,31 @@ function updateClock() {
 setInterval(updateClock, 1000);
 
     function onScanSuccess(decodedText) {
-    // 1. Kunci proses agar tidak double-send (Anti-Spam)
     if (isProcessing) return;
     isProcessing = true;
-    
+
+    const container = document.querySelector(".camera-container");
     const statusBox = document.getElementById("status-container");
-    const statusTxt = document.getElementById("status-text");
-    const readerElem = document.getElementById("reader");
 
-    // Efek visual saat memproses
-    statusBox.style.backgroundColor = "#fff7ed"; // Oranye muda (Loading)
-    statusTxt.innerHTML = `Memproses NIP: ${decodedText}...`;
+    // 1. Langsung nyalakan bingkai hijau (default sukses)
+    container.classList.add("scan-success"); 
 
-    fetch(scriptURL, {
-        method: "POST",
-        mode: "cors", // Pastikan mode CORS aktif
-        body: JSON.stringify({ qr: decodedText })
-    })
-    .then(res => {
-        if (!res.ok) throw new Error("Respon Server Tidak Oke");
-        return res.json();
-    })
+    fetch(scriptURL, { method: "POST", body: JSON.stringify({ qr: decodedText }) })
+    .then(res => res.json())
     .then(result => {
-        // 2. Jika Berhasil (Data dari GAS diterima)
-        if (result.success) {
-            let ketText = result.status || "Berhasil";
-            
-            // Tentukan Tema Warna (Datang/Pulang)
-            const isDatang = result.type === 'datang';
-            const themeColor = isDatang ? '#2ecc71' : '#3498db';
-            const themeBg = isDatang ? '#eafff0' : '#e3f2fd';
-
-            readerElem.style.borderColor = themeColor;
-            statusBox.style.backgroundColor = themeBg;
-            statusTxt.innerHTML = `
-                <div style="font-weight:bold; color:#1a1c42;">${result.nama}</div>
-                <div style="font-size:11px; margin:4px 0;">${ketText}</div>
-                <div style="font-size:18px; font-weight:bold;">${isDatang ? result.jamDatang : result.jamPulang}</div>
-            `;
-        } else {
-            // 3. Jika Gagal Logika (Misal: Belum 10 menit atau sudah absen)
-            statusBox.style.backgroundColor = "#fff0f0";
-            statusTxt.innerHTML = `<span style="color:#d63031;">${result.message}</span>`;
-            readerElem.style.borderColor = "#ff7675";
+        if (result.success && result.type === 'pulang') {
+            // Jika ternyata absen pulang, ganti class-nya ke biru
+            container.classList.remove("scan-success");
+            container.classList.add("scan-pulang");
         }
-    })
-    .catch(err => {
-        // Jika benar-benar gagal koneksi
-        console.error("Fetch Error:", err);
-        statusBox.style.backgroundColor = "#fff0f0";
-        statusTxt.innerHTML = `<span style="color:#d63031;">Gagal terhubung ke Server GAS. Periksa Koneksi/URL Script.</span>`;
+        // ... sisa kode result Bapak ...
     })
     .finally(() => {
-        // 4. JEDA SCANNER (Paling Penting)
-        // Scanner baru akan terbuka kembali setelah 5 detik
         setTimeout(() => {
-            isProcessing = false; // Membuka kunci
-            readerElem.style.borderColor = "#ddd";
-            statusBox.style.backgroundColor = "#fff0f0";
-            statusTxt.innerHTML = "Siap scan berikutnya...";
+            isProcessing = false;
+            // Kembalikan ke normal
+            container.classList.remove("scan-success");
+            container.classList.remove("scan-pulang");
         }, 5000); 
     });
 }
