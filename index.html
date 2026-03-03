@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Scanner Absensi</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+
+<h2>Scan QR Guru</h2>
+<div id="reader" style="width:300px;"></div>
+
+<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbXXXXXXXXXXXXXXXX/exec";
+
+function onScanSuccess(decodedText) {
+  fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify({ qr: decodedText }),
+    headers: { "Content-Type": "application/json" }
+  })
+  .then(res => res.text())
+  .then(data => {
+    alert("Absensi berhasil!");
+  })
+  .catch(err => {
+    alert("Gagal kirim data");
+  });
+}
+
+new Html5Qrcode("reader").start(
+  { facingMode: "environment" },
+  { fps: 10, qrbox: 250 },
+  onScanSuccess
+);
+</script>
+
+</body>
+</html>
