@@ -1,77 +1,141 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>Scanner Absensi</title>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<style>
-body { font-family: Arial; text-align:center; padding:20px; }
-#reader { width:300px; margin:auto; }
-button { padding:10px 20px; margin-top:20px; }
-</style>
-<style>
-.animate-fade-in {
-    animation: fadeIn 0.3s ease-in-out;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner System</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            text-align: center; 
+            background-color: #f4f7fe;
+            margin: 0; padding: 20px;
+            /* Anti Select Text */
+            user-select: none; 
+        }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-</style>
+        #reader { 
+            width: 100%; 
+            max-width: 400px; 
+            margin: auto; 
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            /* Bingkai Putih Awal */
+            border: 8px solid white;
+            transition: border-color 0.3s ease;
+        }
+
+        /* Efek Hijau saat Berhasil Scan */
+        #reader.scan-success {
+            border-color: #2ecc71 !important;
+        }
+
+        .status-text {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+
+        #error-msg { color: red; display: none; margin-top: 50px; }
+    </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
 
-<h2>Scan QR Guru</h2>
-<div id="reader"></div>
+    <div id="main-content">
+        <h2 style="color: #333;">Scan QR Presensi</h2>
+        <div id="reader"></div>
+        <p id="status" class="status-text">Mencari Kamera...</p>
+    </div>
 
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <div id="error-msg">
+        <h1>404 - Not Found</h1>
+        <p>Maaf, halaman ini hanya dapat diakses melalui aplikasi resmi sekolah.</p>
+    </div>
+
+    <audio id="beepAudio">
+        <source src="data:audio/wav;base64,UklGRl9vT19XQVZFRm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YT1vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19v" type="audio/wav">
+    </audio>
 
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbwelKIpYAGqzkjIZndZqWWOXcaYDojnR8pPqa3965ugzcyTE0gHnFKvI2PzQlMnWb2b/exec";
+    // 1. CLOAKING SYSTEM: Cek apakah dibuka dari Google Script (Referrer)
+    // Jika Bapak tes sendiri di tab baru, ini akan memicu error (keamanan)
+    const isAuthorized = document.referrer.indexOf("script.google.com") !== -1;
+    
+    // CATATAN: Jika Bapak ingin tes di tab baru dulu, berikan tanda komentar (//) pada baris if di bawah
+    if (!isAuthorized) {
+        document.getElementById('main-content').style.display = 'none';
+        document.getElementById('error-msg').style.display = 'block';
+    }
 
-window.onload = function() {
+    const scriptURL = "https://script.google.com/macros/s/AKfycbwelKIpYAGqzkjIZndZqWWOXcaYDojnR8pPqa3965ugzcyTE0gHnFKvI2PzQlMnWb2b/exec";
+    const statusText = document.getElementById("status");
+    const readerElem = document.getElementById("reader");
+    const beep = document.getElementById("beepAudio");
+    
+    let isScanning = true; // Flag untuk auto-resume
 
-  console.log("Halaman loaded");
+    function onScanSuccess(qrCodeMessage) {
+        if (!isScanning) return; // Mencegah scan ganda dalam waktu bersamaan
+        
+        isScanning = false;
+        // 1. Efek Visual Hijau
+        readerElem.classList.add("scan-success");
+        statusText.innerText = "✅ QR Terdeteksi! Mengirim data...";
+        
+        // 2. Bunyi Beep
+        beep.play().catch(e => console.log("Audio play blocked"));
 
-  if (!navigator.mediaDevices) {
-    alert("Browser tidak mendukung kamera");
-    return;
-  }
-
-  Html5Qrcode.getCameras()
-    .then(devices => {
-      console.log("Cameras found:", devices);
-
-      if (devices.length === 0) {
-        alert("Tidak ada kamera ditemukan");
-        return;
-      }
-
-      const html5QrCode = new Html5Qrcode("reader");
-
-      html5QrCode.start(
-        devices[0].id,
-        { fps: 10, qrbox: 250 },
-        qrCodeMessage => {
-
-          fetch(scriptURL, {
+        // 3. Kirim Data ke Google Script
+        fetch(scriptURL, {
             method: "POST",
             mode: "no-cors",
             body: JSON.stringify({ qr: qrCodeMessage }),
             headers: { "Content-Type": "text/plain" }
-          });
+        }).then(() => {
+            // 4. AUTO RESUME (Tunggu 2 detik lalu siap scan lagi)
+            setTimeout(() => {
+                isScanning = true;
+                readerElem.classList.remove("scan-success");
+                statusText.innerText = "Siap Scan Berikutnya...";
+            }, 2000); 
+        }).catch(err => {
+            console.error(err);
+            isScanning = true;
+        });
+    }
 
-          alert("QR terkirim");
-        }
-      );
+    // Inisialisasi Kamera Otomatis
+    function startScanner() {
+        const html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 15, qrbox: { width: 250, height: 250 } };
 
-    })
-    .catch(err => {
-      console.error("Error getCameras:", err);
-      alert("Izin kamera ditolak atau error: " + err);
-    });
-};
+        html5QrCode.start(
+            { facingMode: "environment" }, // Gunakan kamera belakang (atau default laptop)
+            config, 
+            onScanSuccess
+        ).then(() => {
+            statusText.innerText = "Kamera Aktif. Silakan Scan QR.";
+        }).catch(err => {
+            statusText.innerText = "❌ Gagal: " + err;
+        });
+    }
+
+    if (isAuthorized) {
+        window.onload = startScanner;
+    }
+
+    // Blokir Tombol F12 dan Inspect Element (Tambahan Keamanan)
+    document.onkeydown = function(e) {
+        if(event.keyCode == 123) return false;
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
+        if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+        if(e.ctrlKey && e.uKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+    }
 </script>
 </body>
 </html>
