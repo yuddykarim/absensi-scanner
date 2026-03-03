@@ -86,7 +86,10 @@
         const statusContainer = document.getElementById("status-container");
         const beep = document.getElementById("beepAudio");
 
-        if(beep) beep.play().catch(() => {});
+        if (beep) {
+    beep.currentTime = 0; // Reset durasi ke awal agar tidak macet
+    beep.play().catch(e => console.log("Izin audio diperlukan: klik layar sekali"));
+}
         container.classList.add("scan-success");
         statusText.innerHTML = "Memproses...";
 
