@@ -3,139 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner System</title>
+    <title>E-Presensi Scanner</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    
     <style>
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            text-align: center; 
-            background-color: #f4f7fe;
-            margin: 0; padding: 20px;
-            /* Anti Select Text */
-            user-select: none; 
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;
         }
-
-        #reader { 
-            width: 100%; 
-            max-width: 400px; 
-            margin: auto; 
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            /* Bingkai Putih Awal */
-            border: 8px solid white;
-            transition: border-color 0.3s ease;
+        .container {
+            background: white; padding: 20px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center;
         }
-
-        /* Efek Hijau saat Berhasil Scan */
-        #reader.scan-success {
-            border-color: #2ecc71 !important;
+        h2 { color: #1a73e8; margin-bottom: 20px; font-size: 22px; }
+        
+        /* Bingkai Scanner */
+        #reader {
+            width: 100%; border-radius: 12px; overflow: hidden;
+            border: 6px solid #ffffff; /* Putih Awal */
+            transition: all 0.3s ease; box-sizing: border-box;
         }
+        #reader.success { border-color: #2ecc71; transform: scale(1.02); }
 
-        .status-text {
-            margin-top: 15px;
-            font-weight: bold;
-            color: #4f46e5;
+        .status-box {
+            margin-top: 20px; padding: 15px; border-radius: 10px;
+            background: #f8f9fa; min-height: 50px; display: flex; align-items: center; justify-content: center;
         }
-
-        #error-msg { color: red; display: none; margin-top: 50px; }
+        #status-text { font-weight: 600; color: #5f6368; font-size: 16px; }
+        
+        /* Animasi */
+        .fade-in { animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
-    <div id="main-content">
-        <h2 style="color: #333;">Scan QR Presensi</h2>
-        <div id="reader"></div>
-        <p id="status" class="status-text">Mencari Kamera...</p>
+<div class="container fade-in">
+    <h2>Scanner Presensi Guru</h2>
+    
+    <div id="reader"></div>
+
+    <div class="status-box">
+        <div id="status-text">Menyiapkan Kamera...</div>
     </div>
+</div>
 
-    <div id="error-msg">
-        <h1>404 - Not Found</h1>
-        <p>Maaf, halaman ini hanya dapat diakses melalui aplikasi resmi sekolah.</p>
-    </div>
-
-    <audio id="beepAudio">
-        <source src="data:audio/wav;base64,UklGRl9vT19XQVZFRm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YT1vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19v" type="audio/wav">
-    </audio>
+<audio id="beep">
+    <source src="data:audio/wav;base64,UklGRl9vT19XQVZFRm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YT1vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19v" type="audio/wav">
+</audio>
 
 <script>
-    // 1. CLOAKING SYSTEM: Cek apakah dibuka dari Google Script (Referrer)
-    // Jika Bapak tes sendiri di tab baru, ini akan memicu error (keamanan)
-    const isAuthorized = true; 
+    const scriptURL = "https://script.google.com/macros/s/AKfycbwelKIpYAGqzkjIZndZqWWOXcaYDojnR8pPqa3965ugzcyTE0gHnFKvI2PzQlMnWb2b/exec";
+    const statusText = document.getElementById("status-text");
+    const readerBox = document.getElementById("reader");
+    const beep = document.getElementById("beep");
     
-    // CATATAN: Jika Bapak ingin tes di tab baru dulu, berikan tanda komentar (//) pada baris if di bawah
-    if (!isAuthorized) {
-        document.getElementById('main-content').style.display = 'none';
-        document.getElementById('error-msg').style.display = 'block';
-    }
+    let isProcessing = false;
 
-    const scriptURL = "https://script.google.com/macros/s/AKfycbyj5xGoAjzkHbRiaCXWJ4MRuB7ZWxmY24gpIIraswmao98W7VAFfz2zWFTO8NLkmvHF/exec";
-    const statusText = document.getElementById("status");
-    const readerElem = document.getElementById("reader");
-    const beep = document.getElementById("beepAudio");
-    
-    let isScanning = true; // Flag untuk auto-resume
-
-    function onScanSuccess(qrCodeMessage) {
-        if (!isScanning) return; // Mencegah scan ganda dalam waktu bersamaan
+    function onScanSuccess(decodedText) {
+        if (isProcessing) return;
         
-        isScanning = false;
-        // 1. Efek Visual Hijau
-        readerElem.classList.add("scan-success");
-        statusText.innerText = "✅ QR Terdeteksi! Mengirim data...";
-        
-        // 2. Bunyi Beep
+        isProcessing = true;
+        // Efek Visual & Suara
+        readerBox.classList.add("success");
+        statusText.style.color = "#2ecc71";
+        statusText.innerText = "✅ Terdeteksi: " + decodedText;
         beep.play().catch(e => console.log("Audio play blocked"));
 
-        // 3. Kirim Data ke Google Script
+        // Kirim ke GAS
         fetch(scriptURL, {
             method: "POST",
             mode: "no-cors",
-            body: JSON.stringify({ qr: qrCodeMessage }),
+            body: JSON.stringify({ qr: decodedText }),
             headers: { "Content-Type": "text/plain" }
-        }).then(() => {
-            // 4. AUTO RESUME (Tunggu 2 detik lalu siap scan lagi)
+        })
+        .then(() => {
             setTimeout(() => {
-                isScanning = true;
-                readerElem.classList.remove("scan-success");
-                statusText.innerText = "Siap Scan Berikutnya...";
-            }, 2000); 
-        }).catch(err => {
+                // Auto-Resume
+                isProcessing = false;
+                readerBox.classList.remove("success");
+                statusText.style.color = "#5f6368";
+                statusText.innerText = "Siap scan berikutnya...";
+            }, 2000); // Jeda 2 detik
+        })
+        .catch(err => {
             console.error(err);
-            isScanning = true;
+            isProcessing = false;
         });
     }
 
-    // Inisialisasi Kamera Otomatis
     function startScanner() {
         const html5QrCode = new Html5Qrcode("reader");
-        const config = { fps: 15, qrbox: { width: 250, height: 250 } };
+        const config = { 
+            fps: 15, 
+            qrbox: { width: 250, height: 250 },
+            aspectRatio: 1.0 
+        };
 
         html5QrCode.start(
-            { facingMode: "environment" }, // Gunakan kamera belakang (atau default laptop)
+            { facingMode: "environment" }, 
             config, 
             onScanSuccess
-        ).then(() => {
-            statusText.innerText = "Kamera Aktif. Silakan Scan QR.";
-        }).catch(err => {
-            statusText.innerText = "❌ Gagal: " + err;
+        )
+        .then(() => {
+            statusText.innerText = "Kamera Aktif. Silakan Scan.";
+        })
+        .catch(err => {
+            statusText.innerText = "❌ Kamera Error: " + err;
         });
     }
 
-    if (isAuthorized) {
-        window.onload = startScanner;
-    }
-
-    // Blokir Tombol F12 dan Inspect Element (Tambahan Keamanan)
-    document.onkeydown = function(e) {
-        if(event.keyCode == 123) return false;
-        if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
-        if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
-        if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
-        if(e.ctrlKey && e.uKey && e.keyCode == 'U'.charCodeAt(0)) return false;
-    }
+    window.onload = startScanner;
 </script>
+
 </body>
 </html>
