@@ -95,34 +95,54 @@
     updateClock();
 
     function onScanSuccess(decodedText) {
-        if (isProcessing) return;
-        isProcessing = true;
+    if (isProcessing) return;
+    isProcessing = true;
+    
+    // Bunyi Beep (Pastikan sudah klik layar sekali agar audio aktif)
+    document.getElementById("beepAudio").play().catch(() => {});
 
-        // Jalankan Suara
-        beep.currentTime = 0;
-        beep.play().catch(e => console.log("Audio play diblokir browser, perlu interaksi pertama"));
+    fetch(scriptURL, { method: "POST", body: JSON.stringify({ qr: decodedText }) })
+    .then(res => res.json())
+    .then(result => {
+        const statusBox = document.getElementById("status-container");
+        const statusTxt = document.getElementById("status-text");
 
-        // Efek Bingkai Hijau
-        readerElem.classList.add("scan-success");
-        statusContainer.style.backgroundColor = "#eafff0";
-        statusContainer.style.color = "#27ae60";
-        statusText.innerText = "BERHASIL: " + decodedText;
+        if (result.success) {
+            // LOGIKA TAMPILAN KETERANGAN WAKTU
+            let ketText = result.keterangan || "-";
+            let ketStyle = "color: #9ca3af; font-family: monospace; font-size: 10px;"; // Default gray
+            let ketIcon = "";
 
-        fetch(scriptURL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({ qr: decodedText }),
-            headers: { "Content-Type": "text/plain" }
-        });
+            if (ketText.includes("Terlambat")) {
+                ketStyle = "color: #e11d48; font-weight: bold; background: #fff1f2; padding: 2px 4px; border-radius: 4px; border: 1px solid #ffe4e6; font-size: 10px;";
+                ketIcon = '⏳ ';
+            } else if (ketText.includes("Pulang Cepat")) {
+                ketStyle = "color: #ea580c; font-weight: bold; background: #fff7ed; padding: 2px 4px; border-radius: 4px; border: 1px solid #ffedd5; font-size: 10px;";
+                ketIcon = '🏃 ';
+            } else if (ketText === "Tepat Waktu") {
+                ketStyle = "color: #059669; font-weight: bold; font-size: 10px;";
+                ketIcon = '✅ ';
+            }
+
+            statusBox.style.backgroundColor = (result.type === 'datang' ? "#eafff0" : "#e3f2fd");
+            statusTxt.innerHTML = `
+                <div style="font-weight:bold; font-size:16px; color:#1a1c42;">${result.nama}</div>
+                <div style="${ketStyle}">${ketIcon}${ketText}</div>
+                <div style="font-size:18px; font-weight:bold; margin-top:5px;">${result.jam}</div>
+            `;
+            document.getElementById("reader").style.borderColor = "#2ecc71";
+        } else {
+            statusTxt.innerText = result.message;
+        }
 
         setTimeout(() => {
             isProcessing = false;
-            readerElem.classList.remove("scan-success");
-            statusContainer.style.backgroundColor = "#fff0f0";
-            statusContainer.style.color = "#d63031";
-            statusText.innerText = "Siap scan berikutnya...";
-        }, 2500);
-    }
+            document.getElementById("reader").style.borderColor = "#ddd";
+            statusTxt.innerHTML = "Siap scan berikutnya...";
+            statusBox.style.backgroundColor = "#fff0f0";
+        }, 4000); // Jeda 4 detik agar guru sempat membaca
+    });
+}
 
     function startScanner(side) {
         if(html5QrCode) {
