@@ -25,6 +25,8 @@ button { padding:10px 20px; margin-top:20px; }
 <h2>Scan QR Guru</h2>
 <div id="reader"></div>
 
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
 <script>
 const scriptURL = "https://script.google.com/macros/s/AKfycbwelKIpYAGqzkjIZndZqWWOXcaYDojnR8pPqa3965ugzcyTE0gHnFKvI2PzQlMnWb2b/exec";
 
@@ -70,17 +72,6 @@ window.onload = function() {
       alert("Izin kamera ditolak atau error: " + err);
     });
 };
-</script>
-function updateClock() {
-    const now = new Date();
-    const time = now.toLocaleTimeString('id-ID', { hour12: false });
-    document.getElementById("scannerClock").innerText = time;
-}
-
-setInterval(updateClock, 1000);
-updateClock();
-</script>
-    
 </script>
 </body>
 </html>
