@@ -87,12 +87,14 @@
     let html5QrCode;
     let isProcessing = false;
 
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('digital-clock').innerText = now.toLocaleTimeString('id-ID');
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
+    // Fungsi Jam Digital Realtime di Atas Kamera
+function updateClock() {
+    const now = new Date();
+    // Gunakan id-ID agar formatnya 24 jam dan sesuai zona waktu perangkat
+    const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    document.getElementById('digital-clock').innerText = now.toLocaleTimeString('id-ID', options);
+}
+setInterval(updateClock, 1000);
 
     function onScanSuccess(decodedText) {
     // 1. Kunci proses agar tidak double-send (Anti-Spam)
