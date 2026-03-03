@@ -11,6 +11,13 @@
             background-color: #f1f3f8;
             margin: 0; display: flex; flex-direction: column; align-items: center; padding-top: 20px;
         }
+        /* Overlay Aktifkan Suara */
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 28, 66, 0.95); z-index: 999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; padding: 20px;
+        }
         #digital-clock {
             font-size: 48px; font-weight: bold; color: #1a1c42; margin-bottom: 20px;
         }
@@ -34,13 +41,20 @@
             min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         .button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 15px 20px; }
-        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-blue { background-color: #e8f0fe; color: #1a73e8; }
         .btn-purple { background-color: #f3e5f5; color: #9c27b0; }
+        .btn-start { background-color: #2ecc71; color: white; padding: 15px 30px; font-size: 18px; margin-top: 20px; }
         .btn-full { grid-column: span 2; background-color: #f8f9fa; color: #5f6368; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
+
+    <div id="overlay">
+        <h2>E-Presensi Guru</h2>
+        <p>Klik tombol di bawah untuk mengaktifkan<br>Kamera dan Suara Beep</p>
+        <button class="btn btn-start" onclick="initApp()">Mulai Scanner</button>
+    </div>
 
     <div id="digital-clock">00:00:00</div>
 
@@ -50,7 +64,7 @@
             <div id="reader"></div>
         </div>
         <div id="status-container">
-            <div id="status-text">Menunggu Kamera...</div>
+            <div id="status-text">Menunggu Aktivasi...</div>
         </div>
         <div class="button-group">
             <button class="btn btn-blue" onclick="switchCamera('environment')">Belakang</button>
@@ -77,6 +91,22 @@
     setInterval(updateClock, 1000);
     updateClock();
 
+    // Fungsi Inisialisasi (Dipicu Tombol Mulai)
+    function initApp() {
+        // Hilangkan Overlay
+        document.getElementById("overlay").style.display = "none";
+        
+        // Pancing Izin Audio
+        const beep = document.getElementById("beepAudio");
+        beep.play().then(() => {
+            beep.pause();
+            beep.currentTime = 0;
+        }).catch(e => console.log("Audio Permission required"));
+
+        // Jalankan Scanner
+        startScanner("environment");
+    }
+
     function onScanSuccess(decodedText) {
         if (isProcessing) return;
         isProcessing = true;
@@ -86,10 +116,12 @@
         const statusContainer = document.getElementById("status-container");
         const beep = document.getElementById("beepAudio");
 
-        if (beep) {
-    beep.currentTime = 0; // Reset durasi ke awal agar tidak macet
-    beep.play().catch(e => console.log("Izin audio diperlukan: klik layar sekali"));
-}
+        // Bunyi Beep (Reset ke awal)
+        if(beep) {
+            beep.currentTime = 0;
+            beep.play().catch(e => console.log("Audio blocked"));
+        }
+
         container.classList.add("scan-success");
         statusText.innerHTML = "Memproses...";
 
@@ -149,27 +181,6 @@
     }
 
     function switchCamera(side) { startScanner(side); }
-
-    window.onload = () => { setTimeout(() => startScanner("environment"), 1000); };
-
-// Fungsi untuk memancing izin audio dari browser
-function unlockAudio() {
-    const beep = document.getElementById("beepAudio");
-    beep.play().then(() => {
-        beep.pause(); // Putar lalu langsung pause hanya untuk ambil izin
-        beep.currentTime = 0;
-        console.log("Audio Unlocked");
-    }).catch(e => console.log("Menunggu interaksi user untuk audio"));
-    
-    // Hapus event listener setelah berhasil unlock sekali
-    window.removeEventListener('click', unlockAudio);
-    window.removeEventListener('touchstart', unlockAudio);
-}
-
-// Pasang pendengar klik pertama di layar
-window.addEventListener('click', unlockAudio);
-window.addEventListener('touchstart', unlockAudio);
-    
 </script>
 </body>
 </html>
