@@ -16,50 +16,197 @@ button { padding:10px 20px; margin-top:20px; }
 <div id="reader"></div>
 
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbw_Hiw-azPT3iVkGRNcGJJ7AVECkrpd6MHSZnRTd7bMhNfbDb6j9aCrcR3yVJjAwxSw/exec";
+// --- KARTU Guru ---
+function loadQRCodeGuru(NIPParam, namaParam, kelasParam) {
+        stopAndBack(false);
+        
+        // Ubah highlight menu sesuai role
+        if(currentUser.role === 'Guru') {
+            setActiveMenu('Kartu Saya');
+        } 
+        
+        showView('view-kartu-Guru');
+        const container = document.getElementById('kartuGuruContainer');
+        
+        // LOGIKA BARU: Tentukan data yang ditampilkan
+        // Jika parameter ada (dari Admin/Guru), pakai itu. Jika tidak, pakai currentUser (Guru login).
+        const namaGuru = namaParam || currentUser.nama || "Guru";
+        const NIPGuru = NIPParam || currentUser.NIP || "1234567890";
+        const kelasGuru = kelasParam || currentUser.kelas || "X";
 
-window.onload = function() {
-
-  console.log("Halaman loaded");
-
-  if (!navigator.mediaDevices) {
-    alert("Browser tidak mendukung kamera");
-    return;
-  }
-
-  Html5Qrcode.getCameras()
-    .then(devices => {
-      console.log("Cameras found:", devices);
-
-      if (devices.length === 0) {
-        alert("Tidak ada kamera ditemukan");
-        return;
-      }
-
-      const html5QrCode = new Html5Qrcode("reader");
-
-      html5QrCode.start(
-        devices[0].id,
-        { fps: 10, qrbox: 250 },
-        qrCodeMessage => {
-
-          fetch(scriptURL, {
-            method: "POST",
-            mode: "no-cors",
-            body: JSON.stringify({ qr: qrCodeMessage }),
-            headers: { "Content-Type": "text/plain" }
-          });
-
-          alert("QR terkirim");
+        // LOGIKA BARU: Tentukan arah tombol Tutup/Kembali
+        // Jika Admin/Guru -> Kembali ke Data Guru
+        // Jika Guru -> Kembali ke Dashboard Guru
+        let backFunction = "loadGuruDashboard()"; // Default untuk Guru
+        if (currentUser.role === 'admin' || currentUser.role === 'guru') {
+            backFunction = "loadDataGuru()";
         }
-      );
 
-    })
-    .catch(err => {
-      console.error("Error getCameras:", err);
-      alert("Izin kamera ditolak atau error: " + err);
-    });
-};
+        container.innerHTML = `
+            <div class="flex justify-center items-center h-full py-12 animate-slide-up">
+                <div class="bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-sm relative transform hover:scale-[1.02] transition duration-300">
+                    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white text-center relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -mr-10 -mt-10 blur-xl"></div>
+                        <h2 class="text-2xl font-bold tracking-tight">KARTU PELAJAR</h2>
+                        <p class="text-xs tracking-[0.2em] uppercase opacity-80 mt-1">SMP NEGERI 3 RATOLINDO</p>
+                    </div>
+            
+                    <div class="p-8 text-center bg-gray-50">
+                        <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-200 inline-block mb-5">
+                            <div id="myQrcode"></div>
+                        </div>
+    
+                        <h3 class="text-2xl font-bold text-gray-800 mb-1">${namaGuru}</h3>
+                        <p class="text-indigo-600 font-mono font-bold text-lg mb-3 tracking-wider">${NIPGuru}</p>
+                        <span class="inline-block px-4 py-1.5 bg-gray-200 text-gray-700 rounded-full text-sm font-bold shadow-sm">${kelasGuru}</span>
+                    </div>
+                    <div class="p-5 bg-white border-t border-gray-100 flex gap-4">
+                        <button onclick="window.print()" class="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-sm shadow hover:bg-black transition flex items-center justify-center">
+                            <i class="fas fa-print mr-2"></i> Cetak
+                        </button>
+                        <button onclick="${backFunction}" class="flex-1 border border-gray-300 text-gray-700 py-3 rounded-xl font-bold text-sm hover:bg-gray-50 transition">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+
+        setTimeout(() => {
+            if (NIPGuru) {
+                document.getElementById("myQrcode").innerHTML = "";
+                new QRCode(document.getElementById("myQrcode"), {
+                    text: String(NIPGuru),
+                    width: 160,
+                    height: 160,
+                    colorDark: "#1f2937",
+                    colorLight: "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            } else {
+                document.getElementById("myQrcode").textContent = "Error NIP";
+            }
+        }, 100);
+    }
+    // --- SCANNER ---
+    function loadScanAbsensi() {
+        isScanning = false;
+        setActiveMenu('Scan Absensi');
+        showView('view-scanner');
+        setTimeout(() => { startCamera('environment'); }, 500);
+    }
+
+    function startCamera(mode) {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+                initCamera(mode);
+            }).catch(err => initCamera(mode));
+        } else {
+            initCamera(mode);
+        }
+    }
+
+    function initCamera(mode) {
+        const loading = document.getElementById('camLoading');
+        loading.classList.remove('hidden');
+        
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+        html5QrCode.start({ facingMode: mode }, config,
+            (decodedText) => onScanSuccess(decodedText),
+            (errorMessage) => { /* ignore */ }
+        ).then(() => {
+            loading.classList.add('hidden');
+            isScanning = false;
+        }).catch((err) => {
+            loading.classList.add('hidden');
+            const resDiv = document.getElementById('scanResult');
+            resDiv.classList.remove('hidden');
+            resDiv.innerHTML = `<div class="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 font-bold text-sm">Gagal Mengakses Kamera: ${err}</div>`;
+        });
+    }
+
+function onScanSuccess(decodedText) {
+        if (!decodedText || decodedText.trim() === "" || decodedText === "undefined") return;
+        if (isScanning) return; 
+        isScanning = true;
+        
+        const resultDiv = document.getElementById('scanResult');
+        resultDiv.classList.remove('hidden');
+        resultDiv.innerHTML = `
+            <div class="bg-indigo-50 text-indigo-700 p-4 rounded-xl border border-indigo-100 flex items-center justify-center animate-pulse font-bold shadow-sm">
+                <i class="fas fa-circle-notch fa-spin mr-3"></i> Memproses Data...
+            </div>`;
+
+        // ========================================================
+        // UPDATE: Ambil Data Role dan Kelas User yang sedang Login
+        // ========================================================
+        const myRole = currentUser ? currentUser.role : '';
+        const myKelas = currentUser ? currentUser.kelas : '';
+
+        // Kirim decodedText (NIP), myRole, dan myKelas ke Server
+        google.script.run.withSuccessHandler(result => {
+            if (result.success) {
+    const color = result.type === 'datang' ? 'green' : 'blue';
+    const namaGuru = result.nama || "Guru";
+    
+    // Kita gunakan result.status (yang berisi Hadir/Terlambat dari server)
+    const statusKehadiran = result.status || "Hadir"; 
+
+    resultDiv.innerHTML = `
+        <div class="bg-${color}-50 text-${color}-900 p-6 rounded-2xl border border-${color}-100 shadow-md animate-fade-in relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-4 opacity-10"><i class="fas fa-check-circle text-6xl"></i></div>
+            
+            <h3 class="font-bold text-xl uppercase mb-1 tracking-tight">${namaGuru}</h3>
+            
+            <p class="text-sm font-bold text-${color}-600 uppercase tracking-widest mb-4">${statusKehadiran}</p>
+            
+            <div class="bg-white/60 backdrop-blur-sm p-3 rounded-xl border border-${color}-200 inline-block">
+                <div class="text-xs uppercase tracking-widest font-bold opacity-60 mb-1">${result.message}</div>
+                <div class="text-3xl font-mono font-bold">${result.type === 'datang' ? result.jamDatang : result.jamPulang}</div>
+            </div>
+            
+            <p class="text-xs mt-4 font-bold uppercase tracking-wide opacity-50 animate-pulse">Siap untuk Guru berikutnya...</p>
+        </div>`;
+    
+    setTimeout(() => { isScanning = false; }, 3000);
+} else {
+                // Tampilan Error (Misal: Beda Kelas)
+                resultDiv.innerHTML = `
+                    <div class="bg-red-50 text-red-700 p-5 rounded-2xl border border-red-100 shadow-sm flex items-center space-x-4">
+                        <div class="bg-red-100 p-3 rounded-full"><i class="fas fa-times text-xl"></i></div>
+                        <div class="text-left">
+                            <h4 class="font-bold">Gagal!</h4>
+                            <p class="text-sm opacity-90">${result.message}</p>
+                        </div>
+                    </div>`;
+                // Jeda lebih lama (4 detik) agar guru sempat membaca pesan error beda kelas
+                setTimeout(() => { isScanning = false; }, 4000);
+            }
+        }).scanAbsensi(decodedText, myRole, myKelas); // <-- Pastikan 3 parameter dikirim
+    }
+
+    function stopAndBack(redirect = true) {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+                html5QrCode = null;
+                isScanning = false;
+                if (redirect && currentUser) returnToDashboard();
+            }).catch(() => {
+                html5QrCode = null;
+                if (redirect && currentUser) returnToDashboard();
+            });
+        } else {
+            if (redirect && currentUser) returnToDashboard();
+        }
+    }
+    
+    function returnToDashboard() {
+        if(currentUser.role === 'admin') loadAdminDashboard();
+        else if(currentUser.role === 'guru') loadGuruDashboard();
+        else loadGuruDashboard();
+    }
 </script>
 
 </body>
