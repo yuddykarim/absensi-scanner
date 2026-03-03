@@ -6,53 +6,79 @@
     <title>E-Presensi Scanner</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f1f3f8;
-            margin: 0; display: flex; flex-direction: column; align-items: center; padding-top: 20px;
-        }
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f1f3f8;
+        margin: 0; display: flex; flex-direction: column; align-items: center; padding-top: 20px;
+    }
 
-        /* Jam Digital */
-        #digital-clock {
-            font-size: 48px; font-weight: bold; color: #1a1c42; margin-bottom: 20px;
-        }
+    /* Jam Digital */
+    #digital-clock {
+        font-size: 48px; font-weight: bold; color: #1a1c42; margin-bottom: 20px;
+    }
 
-        .card {
-            width: 320px; background: white; border-radius: 15px;
-            overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center;
-        }
+    .card {
+        width: 340px; background: white; border-radius: 20px;
+        overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
+    }
 
-        .header {
-            background-color: #1a1c42; color: white; padding: 12px; font-weight: bold; font-size: 18px;
-        }
+    .header {
+        background-color: #1a1c42; color: white; padding: 15px; font-weight: bold; font-size: 18px;
+    }
 
-        .camera-container { padding: 20px; }
+    /* AREA KAMERA - Sekarang ini yang menjadi Bingkai Utama */
+    .camera-container { 
+        padding: 15px;
+        margin: 15px;
+        border: 4px solid #ddd; /* Abu-abu Awal */
+        border-radius: 15px;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Animasi membal */
+        background: #f8f9fa;
+        position: relative;
+    }
 
-        /* Bingkai Kamera - Awalnya Abu-abu tipis */
-        #reader {
-            width: 100%; border: 4px solid #ddd; border-radius: 10px;
-            overflow: hidden; transition: all 0.3s;
-        }
+    /* Efek Berhasil (Hijau) - Dipicu lewat JS ke .camera-container */
+    .camera-container.scan-success {
+        border-color: #2ecc71 !important;
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+    }
 
-        /* Kelas untuk Bingkai Hijau saat Berhasil */
-        #reader.scan-success {
-            border: 6px solid #2ecc71 !important; transform: scale(1.02);
-        }
+    /* Efek Berhasil (Biru untuk Pulang) */
+    .camera-container.scan-pulang {
+        border-color: #3498db !important;
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);
+    }
 
-        #status-container {
-            margin: 10px 20px; padding: 15px; background-color: #fff0f0;
-            border-radius: 8px; color: #d63031; font-size: 14px;
-            font-weight: bold; min-height: 40px; display: flex; align-items: center; justify-content: center;
-        }
+    /* Elemen Reader (Kamera Asli) */
+    #reader {
+        width: 100%; 
+        border: none !important; /* Hilangkan border bawaan library */
+        border-radius: 10px;
+        overflow: hidden;
+    }
 
-        .button-group {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 10px 20px;
-        }
-        .btn { border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .btn-blue { background-color: #e8f0fe; color: #1a73e8; }
-        .btn-purple { background-color: #f3e5f5; color: #9c27b0; }
-        .btn-full { grid-column: span 2; background-color: #f8f9fa; color: #5f6368; margin-bottom: 15px; border: 1px solid #ddd; }
-    </style>
+    /* Status Box */
+    #status-container {
+        margin: 5px 20px 20px 20px; padding: 15px; 
+        background-color: #fff0f0;
+        border-radius: 12px; color: #d63031; font-size: 14px;
+        font-weight: bold; min-height: 50px; 
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        transition: all 0.3s;
+    }
+
+    /* Tombol Navigasi */
+    .button-group {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 15px 20px;
+    }
+    .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn:active { transform: scale(0.95); }
+    .btn-blue { background-color: #e8f0fe; color: #1a73e8; }
+    .btn-purple { background-color: #f3e5f5; color: #9c27b0; }
+    .btn-full { grid-column: span 2; background-color: #f8f9fa; color: #5f6368; border: 1px solid #ddd; }
+</style>
 </head>
 <body>
 
