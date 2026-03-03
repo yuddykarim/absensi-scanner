@@ -148,6 +148,25 @@
     function switchCamera(side) { startScanner(side); }
 
     window.onload = () => { setTimeout(() => startScanner("environment"), 1000); };
+
+// Fungsi untuk memancing izin audio dari browser
+function unlockAudio() {
+    const beep = document.getElementById("beepAudio");
+    beep.play().then(() => {
+        beep.pause(); // Putar lalu langsung pause hanya untuk ambil izin
+        beep.currentTime = 0;
+        console.log("Audio Unlocked");
+    }).catch(e => console.log("Menunggu interaksi user untuk audio"));
+    
+    // Hapus event listener setelah berhasil unlock sekali
+    window.removeEventListener('click', unlockAudio);
+    window.removeEventListener('touchstart', unlockAudio);
+}
+
+// Pasang pendengar klik pertama di layar
+window.addEventListener('click', unlockAudio);
+window.addEventListener('touchstart', unlockAudio);
+    
 </script>
 </body>
 </html>
