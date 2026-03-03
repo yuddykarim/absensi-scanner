@@ -1,19 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Scanner Absensi</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+<meta charset="UTF-8">
+<title>Scanner Absensi</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+body { font-family: Arial; text-align:center; padding:20px; }
+#reader { width:300px; margin:auto; }
+button { padding:10px 20px; margin-top:20px; }
+</style>
 </head>
 <body>
 
 <h2>Scan QR Guru</h2>
-<div id="reader" style="width:300px;"></div>
+<div id="reader"></div>
 
 <script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbXXXXXXXXXXXXXXXX/exec";
+const scriptURL = "https://script.google.com/macros/s/AKfycbwelKIpYAGqzkjIZndZqWWOXcaYDojnR8pPqa3965ugzcyTE0gHnFKvI2PzQlMnWb2b/exec";
 
 function onScanSuccess(decodedText) {
+
   fetch(scriptURL, {
     method: "POST",
     body: JSON.stringify({ qr: decodedText }),
@@ -21,7 +27,7 @@ function onScanSuccess(decodedText) {
   })
   .then(res => res.text())
   .then(data => {
-    alert("Absensi berhasil!");
+    alert(data);
   })
   .catch(err => {
     alert("Gagal kirim data");
