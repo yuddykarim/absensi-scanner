@@ -22,23 +22,19 @@ function onScanSuccess(decodedText) {
 
   fetch(scriptURL, {
     method: "POST",
+    mode: "no-cors",   // ← TAMBAHKAN INI
     body: JSON.stringify({ qr: decodedText }),
-    headers: { "Content-Type": "application/json" }
+    headers: {
+      "Content-Type": "text/plain"
+    }
   })
-  .then(res => res.text())
-  .then(data => {
-    alert(data);
+  .then(() => {
+    alert("Data terkirim");
   })
-  .catch(err => {
+  .catch(() => {
     alert("Gagal kirim data");
   });
 }
-
-new Html5Qrcode("reader").start(
-  { facingMode: "environment" },
-  { fps: 10, qrbox: 250 },
-  onScanSuccess
-);
 </script>
 
 </body>
