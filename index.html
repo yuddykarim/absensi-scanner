@@ -63,8 +63,7 @@
 <script>
     // 1. CLOAKING SYSTEM: Cek apakah dibuka dari Google Script (Referrer)
     // Jika Bapak tes sendiri di tab baru, ini akan memicu error (keamanan)
-    const isAuthorized = document.referrer.indexOf("script.google.com") !== -1 || 
-                     document.referrer.indexOf("googleusercontent.com") !== -1 ||
+    const isAuthorized = true; 
     
     // CATATAN: Jika Bapak ingin tes di tab baru dulu, berikan tanda komentar (//) pada baris if di bawah
     if (!isAuthorized) {
