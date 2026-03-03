@@ -26,35 +26,32 @@
         background-color: #1a1c42; color: white; padding: 15px; font-weight: bold; font-size: 18px;
     }
 
-    /* AREA KAMERA - Sekarang ini yang menjadi Bingkai Utama */
+    /* AREA KAMERA */
     .camera-container { 
         padding: 15px;
         margin: 15px;
-        border: 4px solid #ddd; /* Abu-abu Awal */
+        border: 4px solid #ddd;
         border-radius: 15px;
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Animasi membal */
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         background: #f8f9fa;
         position: relative;
     }
 
-    /* Efek Berhasil (Hijau) - Dipicu lewat JS ke .camera-container */
     .camera-container.scan-success {
         border-color: #2ecc71 !important;
         transform: scale(1.05);
         box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
     }
 
-    /* Efek Berhasil (Biru untuk Pulang) */
     .camera-container.scan-pulang {
         border-color: #3498db !important;
         transform: scale(1.05);
         box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);
     }
 
-    /* Elemen Reader (Kamera Asli) */
     #reader {
         width: 100%; 
-        border: none !important; /* Hilangkan border bawaan library */
+        border: none !important;
         border-radius: 10px;
         overflow: hidden;
     }
@@ -64,12 +61,11 @@
         margin: 5px 20px 20px 20px; padding: 15px; 
         background-color: #fff0f0;
         border-radius: 12px; color: #d63031; font-size: 14px;
-        font-weight: bold; min-height: 50px; 
+        font-weight: bold; min-height: 80px; 
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         transition: all 0.3s;
     }
 
-    /* Tombol Navigasi */
     .button-group {
         display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 20px 15px 20px;
     }
@@ -78,109 +74,86 @@
     .btn-blue { background-color: #e8f0fe; color: #1a73e8; }
     .btn-purple { background-color: #f3e5f5; color: #9c27b0; }
     .btn-full { grid-column: span 2; background-color: #f8f9fa; color: #5f6368; border: 1px solid #ddd; }
-</style>
+    </style>
 </head>
 <body>
 
     <div id="digital-clock">00:00:00</div>
 
     <div class="card">
-        <div class="header">Scanner</div>
+        <div class="header">E-Presensi Guru</div>
         <div class="camera-container">
             <div id="reader"></div>
         </div>
         <div id="status-container">
-            <span id="status-text">Menunggu Kamera...</span>
+            <div id="status-text">Menunggu Kamera...</div>
         </div>
         <div class="button-group">
             <button class="btn btn-blue" onclick="switchCamera('environment')">Belakang</button>
             <button class="btn btn-purple" onclick="switchCamera('user')">Depan</button>
-            <button class="btn btn-full" onclick="window.close()">Kembali</button>
+            <button class="btn btn-full" onclick="location.reload()">Refresh Scanner</button>
         </div>
     </div>
 
     <audio id="beepAudio" preload="auto">
         <source src="https://raw.githubusercontent.com/yuddykarim/absensi-scanner/main/beep.mp3" type="audio/mpeg">
-        <source src="data:audio/wav;base64,UklGRl9vT19XQVZFRm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YT1vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19vT19v" type="audio/wav">
     </audio>
 
 <script>
     const scriptURL = "https://script.google.com/macros/s/AKfycbzhETx9DIZp6WakTELbOoV4TXQreQ2Kh_WSap1U0vWEVqKDcFhH3tFYNSXoQXqDucY9/exec";
     const statusText = document.getElementById("status-text");
     const statusContainer = document.getElementById("status-container");
-    const readerElem = document.getElementById("reader");
     const beep = document.getElementById("beepAudio");
     let html5QrCode;
     let isProcessing = false;
 
-    // Fungsi Jam Digital Realtime di Atas Kamera
-function updateClock() {
-    const now = new Date();
-    // Gunakan id-ID agar formatnya 24 jam dan sesuai zona waktu perangkat
-    const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-    document.getElementById('digital-clock').innerText = now.toLocaleTimeString('id-ID', options);
-}
-setInterval(updateClock, 1000);
+    function updateClock() {
+        const now = new Date();
+        const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+        document.getElementById('digital-clock').innerText = now.toLocaleTimeString('id-ID', options);
+    }
+    setInterval(updateClock, 1000);
 
     function onScanSuccess(decodedText) {
-    if (isProcessing) return;
-    isProcessing = true;
+        if (isProcessing) return;
+        isProcessing = true;
 
-    const container = document.querySelector(".camera-container");
-    const statusBox = document.getElementById("status-container");
+        const container = document.querySelector(".camera-container");
+        
+        // Bunyi & Animasi Awal
+        if(beep) beep.play().catch(() => {});
+        container.classList.add("scan-success");
+        statusText.innerHTML = "Memproses Data...";
 
-    // 1. Langsung nyalakan bingkai hijau (default sukses)
-    container.classList.add("scan-success"); 
+        fetch(scriptURL, { method: "POST", body: JSON.stringify({ qr: decodedText }) })
+        .then(res => res.json())
+        .then(result => {
+            if (result.success) {
+                // Ganti warna ke Biru jika Pulang
+                if (result.type === 'pulang') {
+                    container.classList.remove("scan-success");
+                    container.classList.add("scan-pulang");
+                    statusContainer.style.backgroundColor = "#e3f2fd";
+                } else {
+                    statusContainer.style.backgroundColor = "#eafff0";
+                }
 
-    fetch(scriptURL, { method: "POST", body: JSON.stringify({ qr: decodedText }) })
-    .then(res => res.json())
-    .then(result => {
-        if (result.success && result.type === 'pulang') {
-            // Jika ternyata absen pulang, ganti class-nya ke biru
-            container.classList.remove("scan-success");
-            container.classList.add("scan-pulang");
-        }
-        // ... sisa kode result Bapak ...
-    })
-    .finally(() => {
-        setTimeout(() => {
-            isProcessing = false;
-            // Kembalikan ke normal
-            container.classList.remove("scan-success");
-            container.classList.remove("scan-pulang");
-        }, 5000); 
-    });
-}
-    function startScanner(side) {
-        if(html5QrCode) {
-            html5QrCode.stop().then(() => {
-                mountScanner(side);
-            });
-        } else {
-            mountScanner(side);
-        }
-    }
+                // Logika Label Keterangan (Terlambat/Pulang Cepat)
+                let labelStyle = "font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 5px; margin: 5px 0;";
+                let ket = result.status || "-";
+                
+                if (ket.includes("Terlambat")) {
+                    labelStyle += "color: #e11d48; background: #fff1f2; border: 1px solid #ffe4e6;";
+                } else if (ket.includes("Pulang Cepat")) {
+                    labelStyle += "color: #ea580c; background: #fff7ed; border: 1px solid #ffedd5;";
+                } else {
+                    labelStyle += "color: #059669; background: #f0fdf4;";
+                }
 
-    function mountScanner(side) {
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start(
-            { facingMode: side }, 
-            { fps: 10, qrbox: 200 },
-            onScanSuccess
-        ).then(() => {
-            statusText.innerText = "Kamera Aktif. Silakan Scan.";
-        }).catch(err => {
-            statusText.innerText = "Gagal Kamera: " + err;
-        });
-    }
-
-    function switchCamera(side) {
-        startScanner(side);
-    }
-
-    // Browser sering memblokir audio otomatis, jadi kita butuh satu klik user di awal
-    window.onclick = () => { beep.load(); };
-    window.onload = () => startScanner("environment");
-</script>
-</body>
-</html>
+                statusText.innerHTML = `
+                    <div style="font-weight:bold; font-size:16px; color:#1a1c42;">${result.nama}</div>
+                    <div style="${labelStyle}">${ket}</div>
+                    <div style="font-size:22px; font-weight:bold; color:#1a1c42;">${result.type === 'datang' ? result.jamDatang : result.jamPulang}</div>
+                `;
+            } else {
+                statusContainer.style.backgroundColor = "#
