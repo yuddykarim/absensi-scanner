@@ -65,7 +65,6 @@
     // Jika Bapak tes sendiri di tab baru, ini akan memicu error (keamanan)
     const isAuthorized = document.referrer.indexOf("script.google.com") !== -1 || 
                      document.referrer.indexOf("googleusercontent.com") !== -1 ||
-                     window.location.href.indexOf("yuddykarim.github.io") !== -1;
     
     // CATATAN: Jika Bapak ingin tes di tab baru dulu, berikan tanda komentar (//) pada baris if di bawah
     if (!isAuthorized) {
