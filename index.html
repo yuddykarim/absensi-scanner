@@ -6,76 +6,23 @@
     <title>E-Presensi Scanner</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     
-    <div id="blocker" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: sans-serif;">
-    <h1 style="font-size: 72px; margin: 0; color: #e11d48;">404</h1>
-    <p style="font-size: 18px; margin: 15px 0; font-weight: bold; color: #334155;">Halaman Scanner QR Code tidak bisa diakses<br>selain dari perangkat resmi sekolah.</p>
-    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Security System Integrated | v3.0 E-Presensi sekolah</div>
-</div>
-
-<script>
-  (function() {
-    // 1. PENGATURAN
-    const SECRET_KEY = "SobatPresensi2026"; // Pastikan SAMA dengan di GAS
-    const urlParams = new URLSearchParams(window.location.search);
-    const authInput = urlParams.get('auth');
-    const referrer = document.referrer;
-    const blocker = document.getElementById('blocker');
-
-    // 2. LOGIKA VALIDASI (Lebih Fleksibel tapi Tetap Aman)
-    // Syarat Lolos: Harus ada kunci rahasia yang BENAR di URL
-    const isTokenValid = (authInput === SECRET_KEY);
-    
-    // Kita cek apakah kunci ada. Jika tidak ada kunci, halaman lgsg diblok.
-    if (!isTokenValid) {
-        blocker.style.display = 'flex';
-        window.stop();
-        return;
-    }
-
-    // 3. PEMBERSIH JEJAK (Sangat Cepat)
-    // Segera setelah token divalidasi, kita hapus dari URL bar agar tidak bisa dicopy/dilihat
-    if (window.history.replaceState) {
-        const cleanUrl = window.location.origin + window.location.pathname;
-        window.history.replaceState({}, document.title, cleanUrl);
-    }
-    
-    // Halaman otomatis terbuka normal karena blocker tetap 'display: none'
-  })();
-
-  // 4. PENGUNCI INTERAKSI (Anti-Intip)
-  document.addEventListener('contextmenu', e => e.preventDefault());
-  document.onkeydown = function(e) {
-      if (e.keyCode == 123) return false; // F12
-      if (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) return false; // Ctrl+Shift+I/J/C
-      if (e.ctrlKey && e.keyCode == 85) return false; // Ctrl+U
-  };
-    // CEK KEAMANAN
-    if (!referrer.includes("script.google.com") && authInput !== SECRET_KEY) {
-        // Tampilkan layar penutup jika ilegal
-        blocker.style.display = 'flex';
-        window.stop(); 
-    }
-      // Menghapus parameter ?auth=... dari bar alamat segera setelah divalidasi
-if (window.history.replaceState) {
-    const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-    window.history.replaceState({path: cleanUrl}, '', cleanUrl);
-}
-  })();
-
-  // ANTI INSPECT & KLIK KANAN (Tetap sama)
-  document.addEventListener('contextmenu', e => e.preventDefault());
-  document.onkeydown = function(e) {
-      if (e.keyCode == 123) return false;
-      if (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) return false;
-      if (e.ctrlKey && e.keyCode == 85) return false;
-  };
-</script>
-
     <style>
+        /* 1. SECURITY DISPLAY - SEMBUNYIKAN ISI HALAMAN SECARA DEFAULT */
+        #main-app { display: none; }
+        
+        /* 2. ERROR SCREEN STYLE */
+        #blocker { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #f8fafc; z-index: 99999; flex-direction: column; 
+            align-items: center; justify-content: center; text-align: center; font-family: sans-serif; 
+        }
+
+        /* 3. SCANNER STYLE (Ganteng) */
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f1f3f8;
             margin: 0; display: flex; flex-direction: column; align-items: center; padding-top: 20px;
+            -webkit-user-select: none; user-select: none; /* Anti Copy */
         }
         #digital-clock {
             font-size: 48px; font-weight: bold; color: #1a1c42; margin-bottom: 20px;
@@ -103,61 +50,86 @@ if (window.history.replaceState) {
         .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .btn-blue { background-color: #e8f0fe; color: #1a73e8; }
         .btn-purple { background-color: #f3e5f5; color: #9c27b0; }
-        .btn-full { grid-column: span 2; background-color: #f8f9fa; color: #5f6368; border: 1px solid #ddd; }
-        
-        /* Style dasar tombol Refresh (btn-full) */
-.btn-full {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    background-color: #f8f9fa; /* Warna dasar abu-abu sangat muda */
-    color: #4b5563;           /* Warna teks abu gelap */
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease; /* Agar perubahan warna halus */
-}
-
-/* EFEK HOVER MERAH KALEM KHUSUS REFRESH */
-.btn-full:hover {
-    background-color: #fff1f2 !important; /* Merah sangat muda (Rose 50) */
-    color: #e11d48 !important;            /* Teks jadi merah (Rose 600) */
-    border-color: #fda4af !important;    /* Border merah muda */
-    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.1); /* Bayangan merah tipis */
-    transform: translateY(-1px);         /* Efek sedikit terangkat */
-}
-
-/* Efek saat tombol diklik */
-.btn-full:active {
-    transform: translateY(0);
-    background-color: #ffe4e6 !important;
-}
-        
+        .btn-full {
+            grid-column: span 2; width: 100%; padding: 12px; margin-top: 10px;
+            background-color: #f8f9fa; color: #4b5563; border: 1px solid #e5e7eb;
+            border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+        }
+        .btn-full:hover {
+            background-color: #fff1f2 !important; color: #e11d48 !important; 
+            border-color: #fda4af !important; transform: translateY(-1px);
+        }
     </style>
+
+    <script>
+        // --- GERBANG KEAMANAN UTAMA ---
+        (function() {
+            const SECRET_KEY = "SobatPresensi2026";
+            const urlParams = new URLSearchParams(window.location.search);
+            const authInput = urlParams.get('auth');
+            
+            // Tunggu hingga elemen HTML tersedia
+            document.addEventListener("DOMContentLoaded", function() {
+                const mainApp = document.getElementById('main-app');
+                const blocker = document.getElementById('blocker');
+
+                if (authInput === SECRET_KEY) {
+                    // LOLOS: Tampilkan scanner
+                    mainApp.style.display = 'flex';
+                    // Hapus jejak token di URL bar
+                    if (window.history.replaceState) {
+                        const cleanUrl = window.location.origin + window.location.pathname;
+                        window.history.replaceState({}, document.title, cleanUrl);
+                    }
+                } else {
+                    // GAGAL: Tampilkan 404
+                    blocker.style.display = 'flex';
+                    window.stop();
+                }
+            });
+
+            // ANTI KLIK KANAN & F12
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            document.onkeydown = function(e) {
+                if (e.keyCode == 123) return false;
+                if (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) return false;
+                if (e.ctrlKey && e.keyCode == 85) return false;
+            };
+        })();
+    </script>
 </head>
 <body>
 
-    <div id="digital-clock">00:00:00</div>
+    <div id="blocker">
+        <h1 style="font-size: 72px; margin: 0; color: #e11d48;">404</h1>
+        <p style="font-size: 18px; margin: 15px 0; font-weight: bold; color: #334155;">Halaman Scanner QR Code tidak bisa diakses<br>selain dari perangkat resmi sekolah.</p>
+        <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Security System Integrated | v3.0 E-Presensi</div>
+    </div>
 
-    <div class="card">
-        <div class="header">Scanner QR Code</div>
-        <div class="camera-container" id="cam-border">
-            <div id="reader"></div>
-        </div>
-        <div id="status-container">
-            <div id="status-text">Menunggu Kamera...</div>
-        </div>
-        <div class="button-group">
-            <button class="btn btn-blue" onclick="switchCamera('environment')">Belakang</button>
-            <button class="btn btn-purple" onclick="switchCamera('user')">Depan</button>
-            <button class="btn btn-full" onclick="location.reload()">Refresh Scanner</button>
+    <div id="main-app" style="flex-direction: column; align-items: center;">
+        <div id="digital-clock">00:00:00</div>
+
+        <div class="card">
+            <div class="header">Scanner QR Code</div>
+            <div class="camera-container" id="cam-border">
+                <div id="reader"></div>
+            </div>
+            <div id="status-container">
+                <div id="status-text">Menunggu Kamera...</div>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-blue" onclick="switchCamera('environment')">Belakang</button>
+                <button class="btn btn-purple" onclick="switchCamera('user')">Depan</button>
+                <button class="btn btn-full" onclick="location.reload()">Refresh Scanner</button>
+            </div>
         </div>
     </div>
 
     <audio id="beepAudio" preload="auto">
         <source src="https://raw.githubusercontent.com/yuddykarim/absensi-scanner/main/beep.mp3" type="audio/mpeg">
     </audio>
+
+    </body>
 
 <script>
     const scriptURL = "https://script.google.com/macros/s/AKfycbz8p4RnDQc3CnVml5bQ93ZoxW1XjtlfyiQK71EiemgKB-lv_px60SUhs-SkvRvKg2uC/exec";
