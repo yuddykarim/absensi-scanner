@@ -99,28 +99,32 @@
         .then(res => res.json())
         .then(result => {
             if (result.success) {
+                // Tentukan warna border dan background berdasarkan tipe
                 if (result.type === 'pulang') {
-                    container.classList.remove("scan-success");
                     container.classList.add("scan-pulang");
-                    statusContainer.style.backgroundColor = "#e3f2fd";
+                    statusContainer.style.backgroundColor = "#e3f2fd"; // Biru muda untuk pulang
                 } else {
-                    statusContainer.style.backgroundColor = "#eafff0";
+                    container.classList.add("scan-success");
+                    statusContainer.style.backgroundColor = "#eafff0"; // Hijau muda untuk datang
                 }
 
-                let ket = result.status || "Hadir";
-                let labelStyle = "font-size: 11px; padding: 2px 8px; border-radius: 5px; margin: 5px 0; border: 1px solid ";
+                let ket = result.status; // Mengambil "PULANG CEPAT", "TERLAMBAT", atau "SUDAH ABSEN PULANG"
+                let labelStyle = "font-size: 11px; padding: 2px 8px; border-radius: 5px; margin: 5px 0; border: 1px solid; font-weight: bold; ";
                 
-                if (ket.includes("Terlambat")) labelStyle += "#ffe4e6; color: #e11d48; background: #fff1f2;";
-                else if (ket.includes("Pulang Cepat")) labelStyle += "#ffedd5; color: #ea580c; background: #fff7ed;";
-                else labelStyle += "#dcfce7; color: #059669; background: #f0fdf4;";
+                // Warna Label Dinamis
+                if (ket.includes("TERLAMBAT") || ket.includes("CEPAT")) {
+                    labelStyle += "background: #fff1f2; color: #e11d48; border-color: #ffe4e6;";
+                } else {
+                    labelStyle += "background: #f0fdf4; color: #059669; border-color: #dcfce7;";
+                }
 
                 statusText.innerHTML = `
-    <div style="font-size:16px; color:#1a1c42; font-weight:bold;">${result.nama}</div>
-    <div style="${labelStyle}">${ket}</div>
-    <div style="font-size:24px; font-weight:bold; color:#1a1c42; margin-top:5px;">
-        ${result.type === 'datang' ? result.jamDatang : result.jamPulang}
-    </div>
-`;
+                    <div style="font-size:16px; color:#1a1c42; font-weight:bold;">${result.nama}</div>
+                    <div style="${labelStyle}">${ket}</div>
+                    <div style="font-size:24px; color:#1a1c42; font-weight:bold; margin-top:5px;">
+                        ${result.type === 'datang' ? result.jamDatang : result.jamPulang}
+                    </div>
+                `;
             } else {
                 statusContainer.style.backgroundColor = "#fff0f0";
                 statusText.innerHTML = `<div style="color:#d63031;">${result.message}</div>`;
