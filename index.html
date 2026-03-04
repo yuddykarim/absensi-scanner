@@ -62,35 +62,46 @@
     </style>
 
     <script>
-        // --- GERBANG KEAMANAN UTAMA (VERSI WINDOW NAME - TANPA TOKEN DI URL) ---
+        // --- GERBANG KEAMANAN UTAMA (VERSI WINDOW NAME - FIX) ---
 (function() {
     const SECRET_KEY = "SobatPresensi2026";
     
-    // Cek apakah di memori sesi atau di Nama Jendela ada kuncinya
+    // Cek di memori sesi atau di Nama Jendela
     const isAlreadyAuth = sessionStorage.getItem("is_auth") === "true";
     const windowNameAuth = (window.name === SECRET_KEY);
 
-    document.addEventListener("DOMContentLoaded", function() {
+    // Fungsi untuk membuka blokir
+    function unlockScanner() {
         const mainApp = document.getElementById('main-app');
         const blocker = document.getElementById('blocker');
-
-        // VALIDASI: Lolos jika Nama Jendela benar ATAU Sesi sudah aktif
-        if (windowNameAuth || isAlreadyAuth) {
-            
-            // Simpan izin di memori tab (agar tahan Refresh)
-            sessionStorage.setItem("is_auth", "true");
-            
-            // Hapus jejak Nama Jendela demi keamanan tambahan
-            window.name = ""; 
-            
-            // LOLOS: Tampilkan scanner
+        if (mainApp) {
             mainApp.style.display = 'flex';
-        } else {
-            // GAGAL: Tampilkan 404
-            blocker.style.display = 'flex';
-            window.stop();
+            sessionStorage.setItem("is_auth", "true");
+            window.name = ""; // Hapus jejak nama jendela setelah lolos
         }
-    });
+    }
+
+    // Fungsi untuk blokir total
+    function lockScanner() {
+        const blocker = document.getElementById('blocker');
+        if (blocker) blocker.style.display = 'flex';
+        window.stop(); 
+    }
+
+    // Jalankan pengecekan segera setelah DOM siap
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", checkAuth);
+    } else {
+        checkAuth();
+    }
+
+    function checkAuth() {
+        if (windowNameAuth || isAlreadyAuth) {
+            unlockScanner();
+        } else {
+            lockScanner();
+        }
+    }
 })();
             // ANTI KLIK KANAN & F12
             document.addEventListener('contextmenu', e => e.preventDefault());
