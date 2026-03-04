@@ -1,11 +1,60 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <script>
+  /**
+   * PENGAMAN 1: REFERRER CHECK
+   * Memastikan halaman hanya bisa dibuka jika berasal dari Google Apps Script.
+   */
+  const referrer = document.referrer;
+  const allowedHost = "script.google.com";
+
+  // Jika dibuka langsung (URL dicopas) atau bukan dari domain Google Script
+  if (referrer === "" || !referrer.includes(allowedHost)) {
+      // Langsung alihkan ke halaman lain (misal Google)
+      window.location.replace("https://www.google.com");
+  }
+
+  /**
+   * PENGAMAN 2: ANTI-INSPECT & SHORTCUT
+   * Mengunci tombol keyboard yang biasa digunakan untuk mengintip kode.
+   */
+  document.addEventListener('contextmenu', event => event.preventDefault()); // Anti Klik Kanan
+
+  document.onkeydown = function(e) {
+      // F12
+      if (e.keyCode == 123) return false;
+      
+      // Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+Shift+C (Element)
+      if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) return false;
+      
+      // Ctrl+U (View Source)
+      if (e.ctrlKey && e.keyCode == 85) return false;
+      
+      // Ctrl+S (Save Page)
+      if (e.ctrlKey && e.keyCode == 83) return false;
+  };
+</script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Presensi Scanner</title>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <style>
+        <style>
+  /* PENGAMAN 3: ANTI-SELECT TEXT */
+  body {
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none;    /* Firefox */
+    -ms-user-select: none;     /* IE/Edge */
+    user-select: none;         /* Standar */
+    /* Menghilangkan highlight saat elemen diklik di HP */
+    -webkit-tap-highlight-color: transparent;
+  }
+        // Mematikan semua fungsi console agar tidak bisa diintip via log
+console.log = function() {};
+console.error = function() {};
+console.warn = function() {};
+</style>
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f1f3f8;
