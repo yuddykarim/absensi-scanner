@@ -98,39 +98,37 @@
         fetch(scriptURL, { method: "POST", body: JSON.stringify({ qr: decodedText }) })
         .then(res => res.json())
         .then(result => {
-            if (result.success) {
-                // Tentukan warna border dan background berdasarkan tipe
-                if (result.type === 'pulang') {
-                    container.classList.add("scan-pulang");
-                    statusContainer.style.backgroundColor = "#e3f2fd"; // Biru muda untuk pulang
-                } else {
-                    container.classList.add("scan-success");
-                    statusContainer.style.backgroundColor = "#eafff0"; // Hijau muda untuk datang
-                }
+    if (result.success) {
+        const container = document.getElementById("cam-border");
+        const statusContainer = document.getElementById("status-container");
+        const statusText = document.getElementById("status-text");
 
-                let ket = result.status; // Mengambil "PULANG CEPAT", "TERLAMBAT", atau "SUDAH ABSEN PULANG"
-                let labelStyle = "font-size: 11px; padding: 2px 8px; border-radius: 5px; margin: 5px 0; border: 1px solid; font-weight: bold; ";
-                
-                // Warna Label Dinamis
-                if (ket.includes("TERLAMBAT") || ket.includes("CEPAT")) {
-                    labelStyle += "background: #fff1f2; color: #e11d48; border-color: #ffe4e6;";
-                } else {
-                    labelStyle += "background: #f0fdf4; color: #059669; border-color: #dcfce7;";
-                }
+        if (result.type === 'pulang') {
+            container.classList.add("scan-pulang");
+            statusContainer.style.backgroundColor = "#e3f2fd";
+        } else {
+            container.classList.add("scan-success");
+            statusContainer.style.backgroundColor = "#eafff0";
+        }
 
-                statusText.innerHTML = `
-                    <div style="font-size:16px; color:#1a1c42; font-weight:bold;">${result.nama}</div>
-                    <div style="${labelStyle}">${ket}</div>
-                    <div style="font-size:24px; color:#1a1c42; font-weight:bold; margin-top:5px;">
-                        ${result.type === 'datang' ? result.jamDatang : result.jamPulang}
-                    </div>
-                `;
-            } else {
-                statusContainer.style.backgroundColor = "#fff0f0";
-                statusText.innerHTML = `<div style="color:#d63031;">${result.message}</div>`;
-                container.style.borderColor = "#ff7675";
-            }
-        })
+        let labelStyle = "font-size: 11px; padding: 2px 8px; border-radius: 5px; margin: 5px 0; border: 1px solid; font-weight: bold; ";
+        if (result.status.includes("Terlambat") || result.status.includes("CEPAT")) {
+            labelStyle += "background: #fff1f2; color: #e11d48; border-color: #ffe4e6;";
+        } else {
+            labelStyle += "background: #f0fdf4; color: #059669; border-color: #dcfce7;";
+        }
+
+        statusText.innerHTML = `
+            <div style="font-size:16px; color:#1a1c42; font-weight:bold;">${result.nama}</div>
+            <div style="${labelStyle}">${result.status}</div>
+            <div style="font-size:24px; color:#1a1c42; font-weight:bold; margin-top:5px;">
+                ${result.type === 'datang' ? result.jamDatang : result.jamPulang}
+            </div>
+        `;
+    } else {
+        document.getElementById("status-text").innerHTML = `<div style="color:#d63031;">${result.message}</div>`;
+    }
+})
         .catch(() => { statusText.innerHTML = "Gagal terhubung ke Server."; })
         .finally(() => {
             setTimeout(() => {
