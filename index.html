@@ -14,28 +14,41 @@
 
 <script>
   (function() {
-    const SECRET_KEY = "SobatPresensi2026"; 
+    // 1. PENGATURAN
+    const SECRET_KEY = "SobatPresensi2026"; // Pastikan SAMA dengan di GAS
     const urlParams = new URLSearchParams(window.location.search);
     const authInput = urlParams.get('auth');
     const referrer = document.referrer;
     const blocker = document.getElementById('blocker');
 
-    // LOGIKA KETAT: Harus punya kunci DAN harus datang dari script.google.com
-    const isFromGAS = referrer.includes("script.google.com");
+    // 2. LOGIKA VALIDASI (Lebih Fleksibel tapi Tetap Aman)
+    // Syarat Lolos: Harus ada kunci rahasia yang BENAR di URL
     const isTokenValid = (authInput === SECRET_KEY);
-
-    if (!isFromGAS || !isTokenValid) {
+    
+    // Kita cek apakah kunci ada. Jika tidak ada kunci, halaman lgsg diblok.
+    if (!isTokenValid) {
         blocker.style.display = 'flex';
         window.stop();
-        throw new Error("Akses Ilegal");
+        return;
     }
 
-    // Jika lolos, hapus jejak token di bar alamat agar tidak bisa dicopy
+    // 3. PEMBERSIH JEJAK (Sangat Cepat)
+    // Segera setelah token divalidasi, kita hapus dari URL bar agar tidak bisa dicopy/dilihat
     if (window.history.replaceState) {
-        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
     }
+    
+    // Halaman otomatis terbuka normal karena blocker tetap 'display: none'
+  })();
 
+  // 4. PENGUNCI INTERAKSI (Anti-Intip)
+  document.addEventListener('contextmenu', e => e.preventDefault());
+  document.onkeydown = function(e) {
+      if (e.keyCode == 123) return false; // F12
+      if (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) return false; // Ctrl+Shift+I/J/C
+      if (e.ctrlKey && e.keyCode == 85) return false; // Ctrl+U
+  };
     // CEK KEAMANAN
     if (!referrer.includes("script.google.com") && authInput !== SECRET_KEY) {
         // Tampilkan layar penutup jika ilegal
