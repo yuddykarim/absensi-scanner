@@ -62,36 +62,43 @@
     </style>
 
     <script>
-    // --- GERBANG KEAMANAN UTAMA (VERSI HYBRID - ANTI GAGAL) ---
 (function() {
     const SECRET_KEY = "SobatPresensi2026";
+    const urlParams = new URLSearchParams(window.location.search);
+    const authInput = urlParams.get('auth');
     
-    // 1. Ambil semua bukti identitas
+    // Cek apakah sudah punya izin di memori tab (untuk Refresh/F5)
     const isAlreadyAuth = sessionStorage.getItem("is_auth") === "true";
-    const windowNameAuth = (window.name === SECRET_KEY);
-    const isFromGAS = document.referrer.includes("script.google.com"); // Bukti datang dari GAS
 
     function applySecurity() {
         const mainApp = document.getElementById('main-app');
         const blocker = document.getElementById('blocker');
 
-        // LOGIKA BARU: Lolos jika Nama Jendela BENAR -ATAU- Datang dari GAS -ATAU- Sesi Aktif
-        if (windowNameAuth || isFromGAS || isAlreadyAuth) {
+        // LOGIKA: Lolos jika Token di URL benar ATAU Sesi sudah aktif
+        if (authInput === SECRET_KEY || isAlreadyAuth) {
             
+            // Simpan izin di memori tab
+            sessionStorage.setItem("is_auth", "true");
+            
+            // Tampilkan konten
             if (mainApp) mainApp.style.display = 'flex';
             if (blocker) blocker.style.display = 'none';
-            
-            sessionStorage.setItem("is_auth", "true");
-            window.name = ""; // Hapus jejak
-            
+
+            // PEMBERSIH JEJAK (Sangat Penting!)
+            // Menghapus ?auth=SobatPresensi2026 dari bar alamat secepat kilat
+            if (window.history.replaceState && authInput) {
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
         } else {
             // GAGAL: Tampilkan 404
             if (blocker) blocker.style.display = 'flex';
             if (mainApp) mainApp.style.display = 'none';
-            window.stop(); 
+            window.stop();
         }
     }
 
+    // Jalankan pengecekan
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", applySecurity);
     } else {
@@ -106,7 +113,7 @@
         if (e.ctrlKey && e.keyCode == 85) return false;
     };
 })();
-    </script>
+</script>
 </head>
 <body>
 
