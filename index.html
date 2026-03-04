@@ -39,25 +39,31 @@
         .btn-purple { background-color: #f3e5f5; color: #9c27b0; }
         .btn-full { grid-column: span 2; background-color: #f8f9fa; color: #5f6368; border: 1px solid #ddd; }
         
-        /* Efek Hover Premium untuk Tombol Refresh Scanner */
-#refresh-btn {
-    background-color: #f8f9fa !important;
-    border: 1px solid #ddd !important;
-    color: #444 !important;
-    transition: all 0.3s ease-in-out !important;
+        /* Style dasar tombol Refresh (btn-full) */
+.btn-full {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    background-color: #f8f9fa; /* Warna dasar abu-abu sangat muda */
+    color: #4b5563;           /* Warna teks abu gelap */
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.3s ease; /* Agar perubahan warna halus */
 }
 
-#refresh-btn:hover {
-    background-color: #fff1f2 !important; /* Merah kalem (Rose 50) */
-    color: #e11d48 !important;            /* Teks merah Rose */
+/* EFEK HOVER MERAH KALEM KHUSUS REFRESH */
+.btn-full:hover {
+    background-color: #fff1f2 !important; /* Merah sangat muda (Rose 50) */
+    color: #e11d48 !important;            /* Teks jadi merah (Rose 600) */
     border-color: #fda4af !important;    /* Border merah muda */
+    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.1); /* Bayangan merah tipis */
     transform: translateY(-1px);         /* Efek sedikit terangkat */
-    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.15) !important;
 }
 
-/* Tambahkan efek saat tombol diklik agar lebih responsif */
-#refresh-btn:active {
+/* Efek saat tombol diklik */
+.btn-full:active {
     transform: translateY(0);
     background-color: #ffe4e6 !important;
 }
