@@ -115,10 +115,12 @@
                 else labelStyle += "#dcfce7; color: #059669; background: #f0fdf4;";
 
                 statusText.innerHTML = `
-                    <div style="font-size:16px; color:#1a1c42;">${result.nama}</div>
-                    <div style="${labelStyle}">${ket}</div>
-                    <div style="font-size:22px; color:#1a1c42;">${result.type === 'datang' ? result.jamDatang : result.jamPulang}</div>
-                `;
+    <div style="font-size:16px; color:#1a1c42; font-weight:bold;">${result.nama}</div>
+    <div style="${labelStyle}">${ket}</div>
+    <div style="font-size:24px; font-weight:bold; color:#1a1c42; margin-top:5px;">
+        ${result.type === 'datang' ? result.jamDatang : result.jamPulang}
+    </div>
+`;
             } else {
                 statusContainer.style.backgroundColor = "#fff0f0";
                 statusText.innerHTML = `<div style="color:#d63031;">${result.message}</div>`;
