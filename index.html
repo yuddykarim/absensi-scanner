@@ -3,36 +3,44 @@
 <head>
     <script>
   /**
-   * PENGAMAN 1: REFERRER CHECK
-   * Memastikan halaman hanya bisa dibuka jika berasal dari Google Apps Script.
+   * PENGAMAN 1: REFERRER CHECK DENGAN PESAN ERROR CUSTOM
    */
   const referrer = document.referrer;
   const allowedHost = "script.google.com";
 
-  // Jika dibuka langsung (URL dicopas) atau bukan dari domain Google Script
   if (referrer === "" || !referrer.includes(allowedHost)) {
-      // Langsung alihkan ke halaman lain (misal Google)
-      window.location.replace("https://www.google.com");
+      // Hapus seluruh isi body dan ganti dengan pesan Error 404 Custom
+      document.documentElement.innerHTML = `
+      <title>404 - Not Found</title>
+      <style>
+        body { 
+          background: #f1f5f9; color: #334155; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; 
+        }
+        .container { text-align: center; padding: 20px; }
+        h1 { font-size: 72px; margin: 0; color: #e11d48; }
+        p { font-size: 18px; margin: 10px 0 20px; font-weight: bold; }
+        span { font-size: 14px; color: #64748b; }
+      </style>
+      <div class="container">
+        <h1>404</h1>
+        <p>Halaman Scanner QR Code tidak bisa diakses<br>selain dari perangkat resmi sekolah.</p>
+        <span>Keamanan Terintegrasi v3.0 - E-Presensi Sekolah</span>
+      </div>
+      `;
+      // Hentikan eksekusi skrip selanjutnya
+      throw new Error("Akses Ilegal Terdeteksi");
   }
 
   /**
    * PENGAMAN 2: ANTI-INSPECT & SHORTCUT
-   * Mengunci tombol keyboard yang biasa digunakan untuk mengintip kode.
    */
-  document.addEventListener('contextmenu', event => event.preventDefault()); // Anti Klik Kanan
+  document.addEventListener('contextmenu', event => event.preventDefault());
 
   document.onkeydown = function(e) {
-      // F12
-      if (e.keyCode == 123) return false;
-      
-      // Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+Shift+C (Element)
+      if (e.keyCode == 123) return false; // F12
       if (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) return false;
-      
-      // Ctrl+U (View Source)
-      if (e.ctrlKey && e.keyCode == 85) return false;
-      
-      // Ctrl+S (Save Page)
-      if (e.ctrlKey && e.keyCode == 83) return false;
+      if (e.ctrlKey && e.keyCode == 85) return false; // Ctrl+U
   };
 </script>
     <meta charset="UTF-8">
