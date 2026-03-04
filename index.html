@@ -14,11 +14,27 @@
 
 <script>
   (function() {
-    const SECRET_KEY = "SobatPresensi2026"; // Samakan dengan di GAS
+    const SECRET_KEY = "SobatPresensi2026"; 
     const urlParams = new URLSearchParams(window.location.search);
     const authInput = urlParams.get('auth');
     const referrer = document.referrer;
     const blocker = document.getElementById('blocker');
+
+    // LOGIKA KETAT: Harus punya kunci DAN harus datang dari script.google.com
+    const isFromGAS = referrer.includes("script.google.com");
+    const isTokenValid = (authInput === SECRET_KEY);
+
+    if (!isFromGAS || !isTokenValid) {
+        blocker.style.display = 'flex';
+        window.stop();
+        throw new Error("Akses Ilegal");
+    }
+
+    // Jika lolos, hapus jejak token di bar alamat agar tidak bisa dicopy
+    if (window.history.replaceState) {
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+    }
 
     // CEK KEAMANAN
     if (!referrer.includes("script.google.com") && authInput !== SECRET_KEY) {
@@ -26,6 +42,11 @@
         blocker.style.display = 'flex';
         window.stop(); 
     }
+      // Menghapus parameter ?auth=... dari bar alamat segera setelah divalidasi
+if (window.history.replaceState) {
+    const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+    window.history.replaceState({path: cleanUrl}, '', cleanUrl);
+}
   })();
 
   // ANTI INSPECT & KLIK KANAN (Tetap sama)
