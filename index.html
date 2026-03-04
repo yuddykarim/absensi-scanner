@@ -1,10 +1,15 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Presensi Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
     <div id="blocker" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: sans-serif;">
     <h1 style="font-size: 72px; margin: 0; color: #e11d48;">404</h1>
     <p style="font-size: 18px; margin: 15px 0; font-weight: bold; color: #334155;">Halaman Scanner QR Code tidak bisa diakses<br>selain dari perangkat resmi sekolah.</p>
-    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Security System Integrated</div>
+    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Security System Integrated | v3.0 E-Presensi sekolah</div>
 </div>
 
 <script>
@@ -31,26 +36,8 @@
       if (e.ctrlKey && e.keyCode == 85) return false;
   };
 </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Presensi Scanner</title>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
     <style>
-        <style>
-  /* PENGAMAN 3: ANTI-SELECT TEXT */
-  body {
-    -webkit-user-select: none; /* Safari */
-    -moz-user-select: none;    /* Firefox */
-    -ms-user-select: none;     /* IE/Edge */
-    user-select: none;         /* Standar */
-    /* Menghilangkan highlight saat elemen diklik di HP */
-    -webkit-tap-highlight-color: transparent;
-  }
-        // Mematikan semua fungsi console agar tidak bisa diintip via log
-console.log = function() {};
-console.error = function() {};
-console.warn = function() {};
-</style>
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f1f3f8;
@@ -139,7 +126,7 @@ console.warn = function() {};
     </audio>
 
 <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbw-Jlgcg0jf3v_62Un66Mrvm3dUQufMrq0suEgvHRV1sbFfIciZvX-aI2OJrjfcxRWz/exec";
+    const scriptURL = "https://script.google.com/macros/s/AKfycbz8p4RnDQc3CnVml5bQ93ZoxW1XjtlfyiQK71EiemgKB-lv_px60SUhs-SkvRvKg2uC/exec";
     let html5QrCode;
     let isProcessing = false;
 
