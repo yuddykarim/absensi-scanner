@@ -68,16 +68,25 @@
             const urlParams = new URLSearchParams(window.location.search);
             const authInput = urlParams.get('auth');
             
+            // CEK APAKAH SUDAH PERNAH LOLOS DI TAB INI (Tahan Refresh F5)
+            const isAlreadyAuth = sessionStorage.getItem("is_auth") === "true";
+
             // Tunggu hingga elemen HTML tersedia
             document.addEventListener("DOMContentLoaded", function() {
                 const mainApp = document.getElementById('main-app');
                 const blocker = document.getElementById('blocker');
 
-                if (authInput === SECRET_KEY) {
+                // LOGIKA: Lolos jika Token Benar ATAU Sesi Masih Aktif
+                if (authInput === SECRET_KEY || isAlreadyAuth) {
+                    
+                    // Tanamkan "kartu izin" di memori tab browser
+                    sessionStorage.setItem("is_auth", "true");
+                    
                     // LOLOS: Tampilkan scanner
                     mainApp.style.display = 'flex';
-                    // Hapus jejak token di URL bar
-                    if (window.history.replaceState) {
+                    
+                    // Hapus jejak token di URL bar agar tidak bisa dicopy
+                    if (window.history.replaceState && authInput) {
                         const cleanUrl = window.location.origin + window.location.pathname;
                         window.history.replaceState({}, document.title, cleanUrl);
                     }
