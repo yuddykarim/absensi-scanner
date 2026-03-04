@@ -62,58 +62,50 @@
     </style>
 
     <script>
-(function() {
-    const SECRET_KEY = "SobatPresensi2026";
-    const urlParams = new URLSearchParams(window.location.search);
-    const authInput = urlParams.get('auth');
-    
-    // Cek apakah sudah punya izin di memori tab (untuk Refresh/F5)
-    const isAlreadyAuth = sessionStorage.getItem("is_auth") === "true";
-
-    function applySecurity() {
-        const mainApp = document.getElementById('main-app');
-        const blocker = document.getElementById('blocker');
-
-        // LOGIKA: Lolos jika Token di URL benar ATAU Sesi sudah aktif
-        if (authInput === SECRET_KEY || isAlreadyAuth) {
+        // --- GERBANG KEAMANAN UTAMA ---
+        (function() {
+            const SECRET_KEY = "SobatPresensi2026";
+            const urlParams = new URLSearchParams(window.location.search);
+            const authInput = urlParams.get('auth');
             
-            // Simpan izin di memori tab
-            sessionStorage.setItem("is_auth", "true");
-            
-            // Tampilkan konten
-            if (mainApp) mainApp.style.display = 'flex';
-            if (blocker) blocker.style.display = 'none';
+            // CEK APAKAH SUDAH PERNAH LOLOS DI TAB INI (Tahan Refresh F5)
+            const isAlreadyAuth = sessionStorage.getItem("is_auth") === "true";
 
-            // PEMBERSIH JEJAK (Sangat Penting!)
-            // Menghapus ?auth=SobatPresensi2026 dari bar alamat secepat kilat
-            if (window.history.replaceState && authInput) {
-                const cleanUrl = window.location.origin + window.location.pathname;
-                window.history.replaceState({}, document.title, cleanUrl);
-            }
-        } else {
-            // GAGAL: Tampilkan 404
-            if (blocker) blocker.style.display = 'flex';
-            if (mainApp) mainApp.style.display = 'none';
-            window.stop();
-        }
-    }
+            // Tunggu hingga elemen HTML tersedia
+            document.addEventListener("DOMContentLoaded", function() {
+                const mainApp = document.getElementById('main-app');
+                const blocker = document.getElementById('blocker');
 
-    // Jalankan pengecekan
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", applySecurity);
-    } else {
-        applySecurity();
-    }
+                // LOGIKA: Lolos jika Token Benar ATAU Sesi Masih Aktif
+                if (authInput === SECRET_KEY || isAlreadyAuth) {
+                    
+                    // Tanamkan "kartu izin" di memori tab browser
+                    sessionStorage.setItem("is_auth", "true");
+                    
+                    // LOLOS: Tampilkan scanner
+                    mainApp.style.display = 'flex';
+                    
+                    // Hapus jejak token di URL bar agar tidak bisa dicopy
+                    if (window.history.replaceState && authInput) {
+                        const cleanUrl = window.location.origin + window.location.pathname;
+                        window.history.replaceState({}, document.title, cleanUrl);
+                    }
+                } else {
+                    // GAGAL: Tampilkan 404
+                    blocker.style.display = 'flex';
+                    window.stop();
+                }
+            });
 
-    // ANTI KLIK KANAN & F12
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    document.onkeydown = function(e) {
-        if (e.keyCode == 123) return false;
-        if (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) return false;
-        if (e.ctrlKey && e.keyCode == 85) return false;
-    };
-})();
-</script>
+            // ANTI KLIK KANAN & F12
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            document.onkeydown = function(e) {
+                if (e.keyCode == 123) return false;
+                if (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) return false;
+                if (e.ctrlKey && e.keyCode == 85) return false;
+            };
+        })();
+    </script>
 </head>
 <body>
 
@@ -149,7 +141,7 @@
     </body>
 
 <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbykqaqpQjXU4-lpPQzkJkIgoRuVyTsKzNFmxKIzKMLaaSODXTzkIlsUf9rkMR6En6T3/exec";
+    const scriptURL = "https://script.google.com/macros/s/AKfycbwYE2oypy7E7Q3BuG7M-TCFcumpjcACeC8bnaicDcrsmXeNkVshIs8qi4HpCvvIp5GT/exec";
     let html5QrCode;
     let isProcessing = false;
 
