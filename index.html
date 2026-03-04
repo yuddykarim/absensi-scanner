@@ -62,41 +62,36 @@
     </style>
 
     <script>
-        // --- GERBANG KEAMANAN UTAMA ---
-        (function() {
-            const SECRET_KEY = "SobatPresensi2026";
-            const urlParams = new URLSearchParams(window.location.search);
-            const authInput = urlParams.get('auth');
+        // --- GERBANG KEAMANAN UTAMA (VERSI WINDOW NAME - TANPA TOKEN DI URL) ---
+(function() {
+    const SECRET_KEY = "SobatPresensi2026";
+    
+    // Cek apakah di memori sesi atau di Nama Jendela ada kuncinya
+    const isAlreadyAuth = sessionStorage.getItem("is_auth") === "true";
+    const windowNameAuth = (window.name === SECRET_KEY);
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const mainApp = document.getElementById('main-app');
+        const blocker = document.getElementById('blocker');
+
+        // VALIDASI: Lolos jika Nama Jendela benar ATAU Sesi sudah aktif
+        if (windowNameAuth || isAlreadyAuth) {
             
-            // CEK APAKAH SUDAH PERNAH LOLOS DI TAB INI (Tahan Refresh F5)
-            const isAlreadyAuth = sessionStorage.getItem("is_auth") === "true";
-
-            // Tunggu hingga elemen HTML tersedia
-            document.addEventListener("DOMContentLoaded", function() {
-                const mainApp = document.getElementById('main-app');
-                const blocker = document.getElementById('blocker');
-
-                // LOGIKA: Lolos jika Token Benar ATAU Sesi Masih Aktif
-                if (authInput === SECRET_KEY || isAlreadyAuth) {
-                    
-                    // Tanamkan "kartu izin" di memori tab browser
-                    sessionStorage.setItem("is_auth", "true");
-                    
-                    // LOLOS: Tampilkan scanner
-                    mainApp.style.display = 'flex';
-                    
-                    // Hapus jejak token di URL bar agar tidak bisa dicopy
-                    if (window.history.replaceState && authInput) {
-                        const cleanUrl = window.location.origin + window.location.pathname;
-                        window.history.replaceState({}, document.title, cleanUrl);
-                    }
-                } else {
-                    // GAGAL: Tampilkan 404
-                    blocker.style.display = 'flex';
-                    window.stop();
-                }
-            });
-
+            // Simpan izin di memori tab (agar tahan Refresh)
+            sessionStorage.setItem("is_auth", "true");
+            
+            // Hapus jejak Nama Jendela demi keamanan tambahan
+            window.name = ""; 
+            
+            // LOLOS: Tampilkan scanner
+            mainApp.style.display = 'flex';
+        } else {
+            // GAGAL: Tampilkan 404
+            blocker.style.display = 'flex';
+            window.stop();
+        }
+    });
+})();
             // ANTI KLIK KANAN & F12
             document.addEventListener('contextmenu', e => e.preventDefault());
             document.onkeydown = function(e) {
