@@ -62,54 +62,50 @@
     </style>
 
     <script>
-    // --- GERBANG KEAMANAN UTAMA (VERSI WINDOW NAME - FINAL) ---
-    (function() {
-        const SECRET_KEY = "SobatPresensi2026";
-        
-        // 1. Ambil status kunci dari Memori Sesi atau Nama Jendela
-        const isAlreadyAuth = sessionStorage.getItem("is_auth") === "true";
-        const windowNameAuth = (window.name === SECRET_KEY);
+    // --- GERBANG KEAMANAN UTAMA (VERSI HYBRID - ANTI GAGAL) ---
+(function() {
+    const SECRET_KEY = "SobatPresensi2026";
+    
+    // 1. Ambil semua bukti identitas
+    const isAlreadyAuth = sessionStorage.getItem("is_auth") === "true";
+    const windowNameAuth = (window.name === SECRET_KEY);
+    const isFromGAS = document.referrer.includes("script.google.com"); // Bukti datang dari GAS
 
-        // 2. Fungsi Eksekusi Keamanan
-        function applySecurity() {
-            const mainApp = document.getElementById('main-app');
-            const blocker = document.getElementById('blocker');
+    function applySecurity() {
+        const mainApp = document.getElementById('main-app');
+        const blocker = document.getElementById('blocker');
 
-            if (windowNameAuth || isAlreadyAuth) {
-                // LOLOS: Buka kunci dan tampilkan scanner
-                if (mainApp) mainApp.style.display = 'flex';
-                if (blocker) blocker.style.display = 'none';
-                
-                // Tanamkan izin di sesi agar tahan Refresh (F5)
-                sessionStorage.setItem("is_auth", "true");
-                
-                // Hapus jejak Nama Jendela agar tidak bisa diintip
-                if (windowNameAuth) window.name = ""; 
-            } else {
-                // GAGAL: Tampilkan layar 404 (Pastikan blocker ada di body)
-                if (blocker) blocker.style.display = 'flex';
-                if (mainApp) mainApp.style.display = 'none';
-                
-                // Hentikan proses pemuatan lainnya
-                window.stop(); 
-            }
-        }
-
-        // 3. Pastikan pengecekan jalan HANYA setelah HTML (DOM) siap
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", applySecurity);
+        // LOGIKA BARU: Lolos jika Nama Jendela BENAR -ATAU- Datang dari GAS -ATAU- Sesi Aktif
+        if (windowNameAuth || isFromGAS || isAlreadyAuth) {
+            
+            if (mainApp) mainApp.style.display = 'flex';
+            if (blocker) blocker.style.display = 'none';
+            
+            sessionStorage.setItem("is_auth", "true");
+            window.name = ""; // Hapus jejak
+            
         } else {
-            applySecurity();
+            // GAGAL: Tampilkan 404
+            if (blocker) blocker.style.display = 'flex';
+            if (mainApp) mainApp.style.display = 'none';
+            window.stop(); 
         }
+    }
 
-        // 4. FITUR ANTI-INTIP (KLIK KANAN & F12)
-        document.addEventListener('contextmenu', e => e.preventDefault());
-        document.onkeydown = function(e) {
-            if (e.keyCode == 123) return false; // F12
-            if (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) return false; // Ctrl+Shift+I,J,C
-            if (e.ctrlKey && e.keyCode == 85) return false; // Ctrl+U
-        };
-    })(); // Penutup fungsi utama yang benar (hanya satu)
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", applySecurity);
+    } else {
+        applySecurity();
+    }
+
+    // ANTI KLIK KANAN & F12
+    document.addEventListener('contextmenu', e => e.preventDefault());
+    document.onkeydown = function(e) {
+        if (e.keyCode == 123) return false;
+        if (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode)) return false;
+        if (e.ctrlKey && e.keyCode == 85) return false;
+    };
+})();
     </script>
 </head>
 <body>
