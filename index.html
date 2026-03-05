@@ -146,7 +146,7 @@
     </div>
 
     <audio id="beepAudio" preload="auto">
-        <source src="https://raw.githubusercontent.com/yuddykarim/absensi-scanner/main/beep-01a.mp3">
+        <source src="https://raw.githubusercontent.com/yuddykarim/absensi-scanner/main/beep.mp3">
     </audio>
 
     </body>
@@ -174,10 +174,9 @@
         const statusContainer = document.getElementById("status-container");
         const beep = document.getElementById("beepAudio");
 
-        // Tetap coba putar beep, siapa tahu browser mengizinkan
-        if(beep) {
-            beep.currentTime = 0;
-            beep.play().catch(() => {});
+    if (beep) {
+        beep.currentTime = 0;
+        beep.play().catch(err => console.log("Audio blocked:", err));
         }
 
         container.classList.add("scan-success");
