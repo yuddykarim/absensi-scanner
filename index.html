@@ -91,9 +91,9 @@
             // PEMBERSIH JEJAK (Sangat Penting!)
             // Menghapus ?auth=SobatPresensi2026 dari bar alamat secepat kilat
             if (window.history.replaceState && authInput) {
-                const cleanUrl = window.location.origin + window.location.pathname;
-                window.history.replaceState({}, document.title, cleanUrl);
-            }
+    const cleanUrl = window.location.origin + window.location.pathname + "?gas=" + encodeURIComponent(gasUrl);
+    window.history.replaceState({}, document.title, cleanUrl);
+}
         } else {
             // GAGAL: Tampilkan 404
             if (blocker) blocker.style.display = 'flex';
