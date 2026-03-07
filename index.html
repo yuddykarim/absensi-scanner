@@ -80,23 +80,19 @@
 
         // LOGIKA: Lolos jika Token di URL benar ATAU Sesi sudah aktif
         if (authInput === SECRET_KEY || isAlreadyAuth) {
-    
-    sessionStorage.setItem("is_auth", "true");
+            
+            // Simpan izin di memori tab
+            sessionStorage.setItem("is_auth", "true");
+            
+            // Tampilkan konten
+            if (mainApp) mainApp.style.display = 'flex';
+            if (blocker) blocker.style.display = 'none';
 
-    if (mainApp) mainApp.style.display = 'flex';
-    if (blocker) blocker.style.display = 'none';
-
-    if (window.history.replaceState && authInput) {
-        const cleanUrl = window.location.origin + window.location.pathname + "?gas=" + encodeURIComponent(gasUrl);
-        window.history.replaceState({}, document.title, cleanUrl);
-    }
-
-    // START SCANNER SETELAH AUTH
-    setTimeout(() => {
-        if (typeof startScanner === "function") {
-            startScanner("environment");
-        }
-    }, 500);
+            // PEMBERSIH JEJAK (Sangat Penting!)
+            // Menghapus ?auth=SobatPresensi2026 dari bar alamat secepat kilat
+            if (window.history.replaceState && authInput) {
+    const cleanUrl = window.location.origin + window.location.pathname + "?gas=" + encodeURIComponent(gasUrl);
+    window.history.replaceState({}, document.title, cleanUrl);
 }
         } else {
             // GAGAL: Tampilkan 404
@@ -242,23 +238,20 @@
     }
 
     function mountScanner(side) {
-    html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start(
-        { facingMode: side },
-        { fps: 10, qrbox: 250 },
-        onScanSuccess
-    )
-    .then(() => {
-        document.getElementById("status-text").innerText = "Kamera Aktif. Silakan Scan.";
-    })
-    .catch(err => {
-        document.getElementById("status-text").innerText = "Kamera Error. Restart...";
-        setTimeout(() => startScanner("environment"), 2000);
-    });
-}
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start({ facingMode: side }, { fps: 10, qrbox: 250 }, onScanSuccess)
+        .then(() => { document.getElementById("status-text").innerText = "Kamera Aktif. Silakan Scan."; })
+        .catch(err => {
+document.getElementById("status-text").innerText = "Kamera Error. Restart...";
+setTimeout(() => startScanner("environment"), 2000);
+});
 
     function switchCamera(side) { startScanner(side); }
 
+    // Jalankan otomatis tanpa tombol mulai
+    window.onload = () => {
+        setTimeout(() => startScanner("environment"), 1000);
+    };
 </script>
 </body>
 </html>
