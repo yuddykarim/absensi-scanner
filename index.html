@@ -151,107 +151,169 @@
     </audio>
 
 <script>
-    const params = new URLSearchParams(window.location.search);
-    const scriptURL = params.get("gas");
-    
     let html5QrCode;
-    let isProcessing = false;
+let isProcessing = false;
+let scriptURL = null;
 
-    // Fungsi Jam Digital
-    function updateClock() {
+    /* ================================
+   INIT APP (START POINT)
+================================ */
+document.addEventListener("DOMContentLoaded", initApp);
+function initApp(){
+    const SECRET_KEY = "ZXhwcmVzc2lvbl8yMDI2X2F1dGhfWTRkZHlLYXJpbV9TZWN1cmU=";
+    const params = new URLSearchParams(window.location.search);
+    const authInput = params.get("auth");
+    scriptURL = params.get("gas");
+
+    const isAlreadyAuth = sessionStorage.getItem("is_auth") === "true";
+    const mainApp = document.getElementById("main-app");
+    const blocker = document.getElementById("blocker");
+
+    if(authInput === SECRET_KEY || isAlreadyAuth){
+        sessionStorage.setItem("is_auth","true");
+        mainApp.style.display = "flex";
+        blocker.style.display = "none";
+
+        startClock();
+        hideAuthFromURL(scriptURL);
+        setTimeout(()=>{
+            startScanner("environment");
+        },600);
+    }else{
+        blocker.style.display = "flex";
+        mainApp.style.display = "none";
+    }
+}
+
+/* ================================
+   HIDE AUTH FROM URL
+================================ */
+function hideAuthFromURL(gasUrl){
+    if(!gasUrl) return;
+    const cleanURL =
+        window.location.origin +
+        window.location.pathname +
+        "?gas=" + encodeURIComponent(gasUrl);
+
+    window.history.replaceState({},document.title,cleanURL);
+}
+
+    /* ================================
+   DIGITAL CLOCK
+================================ */
+function startClock(){
+    function updateClock(){
         const now = new Date();
-        const options = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Makassar' };
-        document.getElementById('digital-clock').innerText = now.toLocaleTimeString('id-ID', options);
+        const options = {
+            hour:'2-digit',
+            minute:'2-digit',
+            second:'2-digit',
+            hour12:false,
+            timeZone:'Asia/Makassar'
+        };
+        document.getElementById("digital-clock")
+        .innerText = now.toLocaleTimeString('id-ID',options);
     }
-    setInterval(updateClock, 1000);
+
     updateClock();
+    setInterval(updateClock,1000);
+}
 
-    function onScanSuccess(decodedText) {
-        if (isProcessing) return;
-        isProcessing = true;
+    /* ================================
+   QR SCAN SUCCESS
+================================ */
+function onScanSuccess(decodedText){
+    if(isProcessing) return;
+    isProcessing = true;
 
-        const container = document.getElementById("cam-border");
-        const statusText = document.getElementById("status-text");
-        const statusContainer = document.getElementById("status-container");
-        const beep = document.getElementById("beepAudio");
-
-    if (beep) {
+    const container = document.getElementById("cam-border");
+    const statusText = document.getElementById("status-text");
+    const statusContainer = document.getElementById("status-container");
+    const beep = document.getElementById("beepAudio");
+    if(beep){
         beep.currentTime = 0;
-        beep.play().catch(err => console.log("Audio blocked:", err));
-        }
+        beep.play().catch(()=>{});
+    }
+    container.classList.add("scan-success");
+    statusText.innerHTML = "Memproses...";
+    fetch(scriptURL,{
+        method:"POST",
+        body:JSON.stringify({qr:decodedText})
+    })
+    .then(res=>res.json())
+    .then(result=>{
+        if(result.success){
+            if(result.type === "pulang"){
+                container.classList.add("scan-pulang");
+                statusContainer.style.backgroundColor = "#e3f2fd";
+            }else{
+                container.classList.add("scan-success");
+                statusContainer.style.backgroundColor = "#eafff0";
+            }
 
-        container.classList.add("scan-success");
-        statusText.innerHTML = "Memproses...";
-
-        fetch(scriptURL, { method: "POST", body: JSON.stringify({ qr: decodedText }) })
-        .then(res => res.json())
-        .then(result => {
-    if (result.success) {
-        const container = document.getElementById("cam-border");
-        const statusContainer = document.getElementById("status-container");
-        const statusText = document.getElementById("status-text");
-
-        if (result.type === 'pulang') {
-            container.classList.add("scan-pulang");
-            statusContainer.style.backgroundColor = "#e3f2fd";
-        } else {
-            container.classList.add("scan-success");
-            statusContainer.style.backgroundColor = "#eafff0";
-        }
-
-        let labelStyle = "font-size: 11px; padding: 2px 8px; border-radius: 5px; margin: 5px 0; border: 1px solid; font-weight: bold; ";
-        if (result.status.includes("Terlambat") || result.status.includes("CEPAT")) {
-            labelStyle += "background: #fff1f2; color: #e11d48; border-color: #ffe4e6;";
-        } else {
-            labelStyle += "background: #f0fdf4; color: #059669; border-color: #dcfce7;";
-        }
-
-        statusText.innerHTML = `
-            <div style="font-size:16px; color:#1a1c42; font-weight:bold;">${result.nama}</div>
-            <div style="${labelStyle}">${result.status}</div>
-            <div style="font-size:24px; color:#1a1c42; font-weight:bold; margin-top:5px;">
-                ${result.type === 'datang' ? result.jamDatang : result.jamPulang}
+            statusText.innerHTML = `
+            <div style="font-size:16px;font-weight:bold">${result.nama}</div>
+            <div style="font-size:13px">${result.status}</div>
+            <div style="font-size:24px;font-weight:bold">
+            ${result.type === 'datang' ? result.jamDatang : result.jamPulang}
             </div>
-        `;
-    } else {
-        document.getElementById("status-text").innerHTML = `<div style="color:#d63031;">${result.message}</div>`;
-    }
-})
-        .catch(() => { statusText.innerHTML = "Gagal terhubung ke Server."; })
-        .finally(() => {
-            setTimeout(() => {
-                isProcessing = false;
-                container.classList.remove("scan-success", "scan-pulang");
-                container.style.borderColor = "#ddd";
-                statusContainer.style.backgroundColor = "#fff0f0";
-                statusText.innerHTML = "Siap scan berikutnya...";
-            }, 3000); 
-        });
-    }
-
-    function startScanner(side) {
-        if (html5QrCode) {
-            html5QrCode.stop().then(() => mountScanner(side)).catch(() => mountScanner(side));
-        } else {
-            mountScanner(side);
+            `;
+        }else{
+            statusText.innerHTML = result.message;
         }
+    })
+    .catch(()=>{
+        statusText.innerHTML = "Server tidak merespon";
+    })
+    .finally(()=>{
+        setTimeout(()=>{
+            isProcessing = false;
+            container.classList.remove("scan-success","scan-pulang");
+            statusContainer.style.backgroundColor = "#fff0f0";
+            statusText.innerHTML = "Siap scan berikutnya...";
+        },3000);
+    });
+}
+    
+    /* ================================
+   SCANNER ENGINE
+================================ */
+function startScanner(side){
+    if(html5QrCode){
+        html5QrCode.stop()
+        .then(()=>mountScanner(side))
+        .catch(()=>mountScanner(side));
+    }else{
+        mountScanner(side);
     }
+}
 
-    function mountScanner(side) {
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: side }, { fps: 10, qrbox: 250 }, onScanSuccess)
-        .then(() => { document.getElementById("status-text").innerText = "Kamera Aktif. Silakan Scan."; })
-        .catch(err => {
-document.getElementById("status-text").innerText = "Kamera Error. Restart...";
-setTimeout(() => startScanner("environment"), 2000);
-});
+function mountScanner(side){
+    html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+        { facingMode: side },
+        { fps:10, qrbox:250 },
+        onScanSuccess
+    )
+    .then(()=>{
+        document.getElementById("status-text")
+        .innerText = "Kamera Aktif. Silakan Scan.";
+    })
+    .catch(()=>{
+        document.getElementById("status-text")
+        .innerText = "Kamera Error. Restart...";
+        setTimeout(()=>{
+            startScanner("environment");
+        },2000);
+    });
+}
 
-    function switchCamera(side) { startScanner(side); }
-
-    // Jalankan otomatis tanpa tombol mulai
-    window.onload = () => {
-        setTimeout(() => startScanner("environment"), 1000);
-    };
+/* ================================
+   CAMERA SWITCH
+================================ */
+function switchCamera(side){
+    startScanner(side);
+}
 </script>
 </body>
 </html>
