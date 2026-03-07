@@ -241,8 +241,10 @@
         html5QrCode = new Html5Qrcode("reader");
         html5QrCode.start({ facingMode: side }, { fps: 10, qrbox: 250 }, onScanSuccess)
         .then(() => { document.getElementById("status-text").innerText = "Kamera Aktif. Silakan Scan."; })
-        .catch(err => { document.getElementById("status-text").innerText = "Kamera Error: " + err; });
-    }
+        .catch(err => {
+document.getElementById("status-text").innerText = "Kamera Error. Restart...";
+setTimeout(() => startScanner("environment"), 2000);
+});
 
     function switchCamera(side) { startScanner(side); }
 
