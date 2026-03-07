@@ -152,24 +152,7 @@
     </body>
 
 <script>
-    // 1. Ambil ID yang dikirim dari GAS (Sisi Server)
-    const schoolID = "<?= typeof schoolID !== 'undefined' ? schoolID : '' ?>"; 
-
-    // 2. Daftar URL GAS per sekolah
-    const gasEndpoints = {
-    "sdncontoh": "https://script.google.com/macros/s/AKfycbxxrO235D_su3ExYtwZ43uLcqbnS4KaSPYVYu9TbrmrfgXdTHR9JOj-EOFjzmnZUC_mtg/exec",
-        "sd002": "https://script.google.com/macros/s/URL_GAS_SEKOLAH_2/exec",
-        "sd003": "https://script.google.com/macros/s/URL_GAS_SEKOLAH_3/exec"
-    };
-
-    // 3. Jika tidak ada ID dari GAS, baru gunakan URL Master
-    const scriptURL = gasEndpoints[schoolID] || "https://script.google.com/macros/s/AKfycby1WVA91gYNkmV-Y_upMDM9PoQFakybSXiyUGdIT1Dm4r2Xe5kc3oZrykM4eEcNM2vx/exec";
-
-    // Ini bagian kunci:
-    const scriptURL = gasEndpoints[schoolID] || masterURL;
-
-    console.log("Menghubungkan ke:", scriptURL); // Tambahkan ini untuk cek di Inspect Element
-    
+    const scriptURL = "https://script.google.com/macros/s/AKfycbxla9H7E5q1GcRixRNc2EXC9uBrWlHPRZCipfjvDdqHhSoVvkZYd1u7XaBsohYl2oFo/exec";
     let html5QrCode;
     let isProcessing = false;
 
