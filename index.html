@@ -69,6 +69,7 @@
     const SECRET_KEY = "ZXhwcmVzc2lvbl8yMDI2X2F1dGhfWTRkZHlLYXJpbV9TZWN1cmU=";
     const urlParams = new URLSearchParams(window.location.search);
     const authInput = urlParams.get('auth');
+    const gasUrl = urlParams.get('gas'); // endpoint GAS dari sekolah
     
     // Cek apakah sudah punya izin di memori tab (untuk Refresh/F5)
     const isAlreadyAuth = sessionStorage.getItem("is_auth") === "true";
@@ -152,7 +153,7 @@
     </body>
 
 <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbxla9H7E5q1GcRixRNc2EXC9uBrWlHPRZCipfjvDdqHhSoVvkZYd1u7XaBsohYl2oFo/exec";
+    const scriptURL = gasUrl;
     let html5QrCode;
     let isProcessing = false;
 
